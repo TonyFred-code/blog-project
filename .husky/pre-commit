@@ -3,15 +3,7 @@ echo "HUSKY: Running pre-commit hooks..."
 # Check if lint-staged is installed
 if npx --no-install lint-staged --version >/dev/null 2>&1; then
   echo "HUSKY: Lint-staged found, running..."
-  npx lint-staged --cwd client
+  npx lint-staged
 else
   echo "HUSKY: lint-staged not found, skipping..."
-fi
-
-# Check if ESLint is installed
-if npx --no-install eslint --version >/dev/null 2>&1; then
-  echo "HUSKY: ESLint found, running..."
-  npx eslint .
-else
-  echo "HUSKY: ESLint not found, skipping..."
 fi
