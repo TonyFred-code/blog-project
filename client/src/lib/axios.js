@@ -17,7 +17,7 @@ function setSessionExpiredHandler(handler) {
 }
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL || "http://localhost:3000/api",
+  baseURL: "/api",
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
@@ -63,7 +63,7 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (
-      error.response?.status === 401 ||
+      error.response?.status !== 401 ||
       !originalRequest ||
       originalRequest._retry ||
       shouldSkipRefresh(originalRequest.url)

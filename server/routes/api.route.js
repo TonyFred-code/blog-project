@@ -4,8 +4,11 @@ import { registerRouter } from "./register.route.js";
 import { logoutRouter } from "./logout.route.js";
 import { refreshTokenRouter } from "./refreshToken.route.js";
 import { jwtStrategyAuth } from "../middleware/authGuards.js";
+import { requireCsrfHeader } from "../middleware/csrfGuard.js";
 
 const apiRouter = Router();
+
+apiRouter.use(requireCsrfHeader);
 
 apiRouter.use("/logout", logoutRouter);
 apiRouter.use("/login", loginRouter);
