@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import passport from "passport";
 import cookieParser from "cookie-parser";
+import { apiRouter } from "./routes/api.route.js";
 
 const app = express();
 
@@ -28,9 +29,9 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get("/", (req, res) => {
-  res.json({ msg: "Server is up and running" });
-});
 app.use(passport.initialize());
 
+app.use(cookieParser());
+
+app.use("/api", apiRouter);
 export default app;
