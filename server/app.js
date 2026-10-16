@@ -15,7 +15,7 @@ const allowedOrigins = [
 
 app.set("trust proxy", 1);
 
-app.use(logClientIp());
+app.use(logClientIp);
 
 app.use(
   cors({
