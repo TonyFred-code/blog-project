@@ -1,0 +1,18 @@
+# Dependencies and lockfiles
+node_modules
+package-lock.json
+
+# Client build output
+client/dist
+client/coverage
+
+# Server generated files (adjust to your Prisma output path)
+server/generated
+server/prisma/migrations
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
