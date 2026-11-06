@@ -21,6 +21,8 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  posts Post[]
 }
 
 model RefreshToken {
@@ -39,3 +41,18 @@ model RefreshToken {
   @@index([familyId])
 }
 
+
+model Post {
+  id String @id @default(uuid())
+  title String
+  subtitle String?
+  slug String @unique
+  content String
+  published Boolean @default(false)
+  authorId String
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+}
