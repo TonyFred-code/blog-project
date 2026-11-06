@@ -89,27 +89,23 @@ async function viewPost(req, res) {
     });
   } catch (error) {
     if (error instanceof AppError) {
-      let errors = [];
-      if (error.statusCode === POST_ERROR_CODES.POST_NOT_FOUND) {
-        errors.push({
-          field: "general",
-          message: "Post not found.",
-        });
-      } else {
-        errors.push({
-          field: "general",
-          message: "Something went wrong. Please try again later.",
-        });
+      let errMsg = "Something went wrong. Please try again later.";
+
+      if (error.errorCode === POST_ERROR_CODES.POST_NOT_FOUND) {
+        errMsg = "Post not found. Please try again.";
       }
+
       return res.status(error.statusCode).json({
         success: false,
-        errors,
+        message: errMsg,
+        errors: [],
       });
     }
 
     return res.status(500).json({
       success: false,
-      errors: [{ field: "general", message: "Internal server error." }],
+      errors: [],
+      message: "Internal server error. Please try again later.",
     });
   }
 }

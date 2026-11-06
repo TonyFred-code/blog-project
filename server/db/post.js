@@ -65,32 +65,17 @@ async function createPost(content, authorId, title, subtitle, slug) {
 }
 
 async function getPostBySlug(slug) {
-  try {
-    const post = await prisma.post.findUnique({
-      where: {
-        slug,
-      },
-    });
+  const post = await prisma.post.findUnique({
+    where: {
+      slug,
+    },
+  });
 
-    if (!post) {
-      throw new AppError(
-        "Post not found",
-        404,
-        POST_ERROR_CODES.POST_NOT_FOUND
-      );
-    }
-
-    return post;
-  } catch (error) {
-    console.error(error);
-    const err = new AppError(
-      "Failed to get post",
-      404,
-      POST_ERROR_CODES.POST_NOT_FOUND
-    );
-
-    throw err;
+  if (!post) {
+    throw new AppError("Post not found", 404, POST_ERROR_CODES.POST_NOT_FOUND);
   }
+
+  return post;
 }
 
 export { createPost, getPostBySlug, getPosts };
