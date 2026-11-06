@@ -21,4 +21,4 @@ async function loginAction({ request }) {
   return handleLogin(data);
 }
 
-export { handleLogin, loginAction };
+export { loginAction };
