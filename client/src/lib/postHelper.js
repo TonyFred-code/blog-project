@@ -70,6 +70,16 @@ async function viewPostLoader({ params }) {
     const response = await api.get(`/posts/${params.slug}`);
     return response.data;
   } catch (error) {
+    if (error.status === 404) {
+      throw Response.json(
+        {
+          message:
+            "The post you are looking for does not exist or has been removed.",
+        },
+        { status: 404 }
+      );
+    }
+
     return normalizeApiError(error);
   }
 }

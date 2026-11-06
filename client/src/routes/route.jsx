@@ -12,11 +12,13 @@ import { createNewPostAction, viewPostLoader } from "@/lib/postHelper";
 import Editor from "@/components/Editor";
 import Post from "@/pages/Post";
 import { indexLoader, postsLoader } from "@/lib/indexHelper";
+import ErrorPage from "@/pages/ErrorPage";
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
+    errorElement: <ErrorPage />,
     hydrateFallbackElement: (
       <div className="min-h-screen flex items-center justify-center">
         <div className="size-6 rounded-full bg-foreground animate-ping"></div>
