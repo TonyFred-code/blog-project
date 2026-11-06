@@ -5,6 +5,7 @@ import api, {
 } from "@/lib/axios.js";
 import { useCallback, useEffect, useState } from "react";
 import AuthContext from "./AuthContext";
+import { toast } from "sonner";
 
 function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -44,11 +45,13 @@ function AuthProvider({ children }) {
   const login = useCallback((user, token) => {
     setAccessToken(token);
     setUser(user);
+    toast.success("Login successful! Welcome back!");
   }, []);
 
   const logout = useCallback(async () => {
     try {
       await api.post("/logout");
+      toast.success("User logged out. Come back soon.");
     } catch (error) {
       console.error("Error logging out:", error);
     } finally {
