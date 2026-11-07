@@ -1,9 +1,11 @@
 import useAuth from "@/hooks/useAuth";
 import { Loader } from "lucide-react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+  const currentPath = encodeURIComponent(location.pathname + location.search);
 
   if (isLoading) {
     return (
@@ -14,7 +16,7 @@ function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={`/login?redirectTo=${currentPath}`} replace />;
   }
 
   return children;

@@ -89,7 +89,6 @@ export default function Login() {
 
     if (actionData.token && actionData.user) {
       login(actionData.user, actionData.token);
-      navigate("/");
     }
   }, [actionData, login, navigate]);
 
@@ -114,11 +113,7 @@ export default function Login() {
                 </CardDescription>
               </CardHeader>
 
-              <Form
-                method="post"
-                action="/login"
-                className="flex flex-col gap-3"
-              >
+              <Form method="post" className="flex flex-col gap-3">
                 <CardContent className="space-y-4">
                   {errors.general && (
                     <div className="flex items-center gap-2 rounded-lg bg-destructive/15 p-3 text-sm font-medium text-destructive border border-destructive/20">
