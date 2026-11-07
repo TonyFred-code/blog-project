@@ -13,6 +13,7 @@ import Editor from "@/components/Editor";
 import Post from "@/pages/Post";
 import { indexLoader, postsLoader } from "@/lib/indexHelper";
 import ErrorPage from "@/pages/ErrorPage";
+import { Loader } from "lucide-react";
 
 const router = createBrowserRouter([
   {
@@ -21,7 +22,7 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     hydrateFallbackElement: (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="size-6 rounded-full bg-foreground animate-ping"></div>
+        <Loader className="animate-spin size-9 text-secondary-foreground" />
       </div>
     ),
     children: [
