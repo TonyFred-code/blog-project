@@ -1,19 +1,12 @@
-import { AlertCircle, Loader2, PenLine } from "lucide-react";
-import { Suspense, useEffect, useRef, useState } from "react";
-import {
-  Form,
-  useActionData,
-  useNavigate,
-  useNavigation,
-} from "react-router-dom";
-import Editor from "@/components/Editor";
+import { AlertCircle, Loader2 } from "lucide-react";
+import { lazy, Suspense, useRef, useState } from "react";
+import { Form, useActionData, useNavigation } from "react-router-dom";
 import ButtonLink from "@/components/LinkButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import {
   MAX_POST_CHARS_COUNT,
   MAX_SUBTITLE_CHARS_COUNT,
@@ -27,39 +20,15 @@ import {
   validateTitle,
 } from "@/lib/postHelper";
 
+const Editor = lazy(() => import("@/components/Editor"));
+
 const FORM_STAGES = {
   CONTENT: "content",
   TITLE: "title",
   PREVIEW: "preview",
 };
 
-// const defaultContent = `# Welcome to the Markdown Editor!
-
-// This is a sample of the **React Markdown Editor**.
-
-// ## ✨ Features
-// - Real-time preview
-// - Custom styling support
-// - Code highlighting
-// - Auto focus at the end of the text
-
-// ## 📦 Sample Code
-
-// \`\`\`javascript
-// function hello() {
-//   console.log("Hello, world!");
-// }
-// \`\`\`
-
-// ## 🔗 Links
-
-// Visit [uiwjs/react-md-editor](https://github.com/uiwjs/react-md-editor) for more information.
-// `;
-// const defaultTitle = "Untitled";
-// const defaultSubtitle = "Untitled subtitle";
-
 export default function CreatePost() {
-  const navigate = useNavigate();
   const actionData = useActionData();
   const navigation = useNavigation();
   const [value, setValue] = useState("");
@@ -87,7 +56,8 @@ export default function CreatePost() {
   const subtitleRef = useRef(null);
   const addContentBtnRef = useRef(null);
 
-  const isSubmitting = navigation.state === "submitting";
+  const isBusy = navigation.state !== "idle";
+
   const isOverLimit = stats.characters > MAX_POST_CHARS_COUNT;
 
   const serverErrors = (() => {
@@ -155,14 +125,6 @@ export default function CreatePost() {
         : serverErrors.content,
     general: anyTouched ? null : serverErrors.general,
   };
-
-  useEffect(() => {
-    if (!actionData) return;
-
-    if (actionData.success && actionData.data.slug) {
-      navigate(`/post/${actionData.data.slug}`);
-    }
-  }, [actionData, navigate]);
 
   function changeFormStage(newStage) {
     setManualOverride({
@@ -291,11 +253,11 @@ export default function CreatePost() {
                 <Button
                   type="submit"
                   form="post-form"
-                  disabled={isSubmitting || isOverLimit}
+                  disabled={isBusy || isOverLimit}
                 >
-                  {isSubmitting ? (
+                  {isBusy ? (
                     <>
-                      <Loader2 />
+                      <Loader2 className="animate-spin" />
                       Publishing...
                     </>
                   ) : (
@@ -422,14 +384,10 @@ export default function CreatePost() {
                 <FieldError errors={errors.content} />
                 <Suspense
                   fallback={
-                    <Card className="w-full max-w-xs">
-                      <CardHeader>
-                        <Skeleton className="h-4 w-2/3" />
-                      </CardHeader>
-                      <CardContent>
-                        <Skeleton className="aspect-video w-full" />
-                      </CardContent>
-                    </Card>
+                    <div className="space-y-4 w-full py-4">
+                      <Skeleton className="h-12 w-full rounded-md" />
+                      <Skeleton className="h-87 w-full rounded-md" />
+                    </div>
                   }
                 >
                   <Editor
@@ -439,7 +397,6 @@ export default function CreatePost() {
                       handleFormFieldChange("content");
                     }}
                     onStatsChange={setStats}
-                    isInvalid={errors.content.length > 0}
                   />
                 </Suspense>
                 <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
