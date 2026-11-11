@@ -5,6 +5,7 @@ import {
 } from "@/constants/postConstants";
 import api from "@/lib/axios";
 import { normalizeApiError } from "@/lib/errorHelper";
+import { withMinDelay } from "@/lib/loaderUtils";
 
 function validateTitle(value) {
   if (!value.trim()) return [{ message: "Post title is required." }];
@@ -46,11 +47,14 @@ function validateContent(value, stats) {
 
 async function handleCreateNewPost({ content, title, subtitle }) {
   try {
-    const response = await api.post("/posts", {
-      content,
-      title,
-      subtitle,
-    });
+    const response = await withMinDelay(
+      api.post("/posts", {
+        content,
+        title,
+        subtitle,
+      }),
+      150
+    );
 
     return response.data;
   } catch (error) {
@@ -67,7 +71,7 @@ async function createNewPostAction({ request }) {
 
 async function viewPostLoader({ params }) {
   try {
-    const response = await api.get(`/posts/${params.slug}`);
+    const response = await withMinDelay(api.get(`/posts/${params.slug}`));
     return response.data;
   } catch (error) {
     if (error.status === 404) {
