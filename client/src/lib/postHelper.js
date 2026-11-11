@@ -6,6 +6,7 @@ import {
 import api from "@/lib/axios";
 import { normalizeApiError } from "@/lib/errorHelper";
 import { withMinDelay } from "@/lib/loaderUtils";
+import { replace } from "react-router-dom";
 
 function validateTitle(value) {
   if (!value.trim()) return [{ message: "Post title is required." }];
@@ -56,7 +57,8 @@ async function handleCreateNewPost({ content, title, subtitle }) {
       150
     );
 
-    return response.data;
+    const dataObj = response.data.data;
+    return replace(`/post/${dataObj.slug}`);
   } catch (error) {
     return normalizeApiError(error);
   }
