@@ -16,7 +16,13 @@ function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to={`/login?redirectTo=${currentPath}`} replace />;
+    return (
+      <Navigate
+        to={`/login?redirectTo=${currentPath}`}
+        state={{ fromProtected: true }}
+        replace
+      />
+    );
   }
 
   return children;
