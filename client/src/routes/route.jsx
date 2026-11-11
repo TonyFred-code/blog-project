@@ -8,11 +8,16 @@ import { registerAction } from "@/lib/registerHelper";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import RestrictAuth from "@/components/RestrictAuth";
 import CreatePost from "@/pages/CreatePost";
-import { createNewPostAction, viewPostLoader } from "@/lib/postHelper";
-import Editor from "@/components/Editor";
+import {
+  createNewPostAction,
+  editPostAction,
+  editPostLoader,
+  viewPostLoader,
+} from "@/lib/postHelper";
 import Post from "@/pages/Post";
 import { indexLoader, postsLoader } from "@/lib/indexHelper";
 import ErrorPage from "@/pages/ErrorPage";
+import EditPost from "@/pages/EditPost";
 import { Loader } from "lucide-react";
 
 const router = createBrowserRouter([
@@ -59,12 +64,14 @@ const router = createBrowserRouter([
         action: createNewPostAction,
       },
       {
-        path: "editor",
+        path: "post/:slug/edit",
         element: (
           <ProtectedRoute>
-            <Editor />
+            <EditPost />
           </ProtectedRoute>
         ),
+        loader: editPostLoader,
+        action: editPostAction,
       },
       {
         path: "post/:slug",

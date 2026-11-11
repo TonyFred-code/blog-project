@@ -6,7 +6,7 @@ import {
 import { getPlainTextLength } from "../lib/postUtils.js";
 import { body } from "./validator.js";
 
-const createPostValidationRules = [
+const postValidationRules = [
   body("title")
     .trim()
     .notEmpty()
@@ -41,4 +41,4 @@ const createPostValidationRules = [
     }),
 ];
 
-export { createPostValidationRules };
+export { postValidationRules };

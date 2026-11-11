@@ -64,6 +64,46 @@ async function createPost(content, authorId, title, subtitle, slug) {
   }
 }
 
+async function updatePost(content, authorId, title, subtitle, slug) {
+  try {
+    const post = await prisma.post.findUnique({
+      where: { slug },
+      select: { authorId: true },
+    });
+
+    if (!post) {
+      throw new AppError(
+        "Post not found",
+        404,
+        POST_ERROR_CODES.POST_NOT_FOUND
+      );
+    }
+
+    if (post.authorId !== authorId) {
+      throw new AppError("Unauthorized", 403, POST_ERROR_CODES.UNAUTHORIZED);
+    }
+
+    const updatedPost = await prisma.post.update({
+      where: { slug },
+      data: {
+        content,
+        title,
+        subtitle,
+      },
+    });
+
+    return updatedPost;
+  } catch (error) {
+    if (error instanceof AppError) throw error;
+    console.error(error);
+    throw new AppError(
+      "Failed to update post",
+      500,
+      POST_ERROR_CODES.POST_UPDATE_FAILED
+    );
+  }
+}
+
 async function getPostBySlug(slug) {
   const post = await prisma.post.findUnique({
     where: {
@@ -78,4 +118,4 @@ async function getPostBySlug(slug) {
   return post;
 }
 
-export { createPost, getPostBySlug, getPosts };
+export { createPost, getPostBySlug, getPosts, updatePost };

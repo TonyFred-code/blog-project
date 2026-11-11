@@ -3,6 +3,7 @@ import {
   createPost as createPostDB,
   getPostBySlug as getPostBySlugDB,
   getPosts as getPostsDB,
+  updatePost as updatePostDB,
 } from "../db/post.js";
 import { AppError } from "../lib/errorUtils.js";
 import { generateHashedSlug } from "../lib/postUtils.js";
@@ -36,6 +37,47 @@ async function getPosts(req, res) {
       success: false,
       message: "Internal server error. Please try again.",
       errors: [],
+    });
+  }
+}
+
+async function updatePost(req, res) {
+  const userId = req.user.id;
+  const slug = req.params.slug;
+  const { content, title, subtitle } = req.body;
+
+  try {
+    const post = await updatePostDB(content, userId, title, subtitle, slug);
+    return res.status(200).json({
+      success: true,
+      data: post,
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      let message = "Something went wrong. Please try again later.";
+      if (error.errorCode === POST_ERROR_CODES.POST_UPDATE_FAILED) {
+        message = "Failed to update post. Please try again.";
+      } else if (error.errorCode === POST_ERROR_CODES.POST_NOT_FOUND) {
+        message = "Post not found. Please try again later.";
+      } else if (error.errorCode === POST_ERROR_CODES.UNAUTHORIZED) {
+        message = "You are not authorized to update this post.";
+      }
+      return res.status(error.statusCode).json({
+        success: false,
+        message,
+        errors: [
+          {
+            field: "general",
+            message,
+          },
+        ],
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error. Please try again later.",
+      errors: [{ field: "general", message: "Internal server error." }],
     });
   }
 }
@@ -79,6 +121,47 @@ async function createPost(req, res) {
   }
 }
 
+async function getPostToBeEdited(req, res) {
+  const slug = req.params.slug;
+  const userId = req.user.id;
+
+  try {
+    const post = await getPostBySlugDB(slug);
+
+    if (post.authorId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: "Non authored post edit is unauthorized.",
+        errors: [],
+      });
+    }
+
+    return res.status(200).json({
+      data: post,
+    });
+  } catch (error) {
+    if (error instanceof AppError) {
+      let errMsg = "Something went wrong. Please try again later.";
+
+      if (error.errorCode === POST_ERROR_CODES.POST_NOT_FOUND) {
+        errMsg = "Post not found. Please try again.";
+      }
+
+      return res.status(error.statusCode).json({
+        success: false,
+        message: errMsg,
+        errors: [],
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      errors: [],
+      message: "Internal server error. Please try again later.",
+    });
+  }
+}
+
 async function viewPost(req, res) {
   const slug = req.params.slug;
 
@@ -110,4 +193,4 @@ async function viewPost(req, res) {
   }
 }
 
-export { createPost, viewPost, getPosts };
+export { createPost, viewPost, getPosts, getPostToBeEdited, updatePost };

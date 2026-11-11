@@ -6,7 +6,9 @@ import { ButtonGroup } from "@/components/ui/button-group";
 import { Skeleton } from "@/components/ui/skeleton";
 import UserAvatar from "@/components/UserAvatar";
 import useAuth from "@/hooks/useAuth";
+import { useEffect } from "react";
 import { useLoaderData } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Post() {
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -14,6 +16,18 @@ export default function Post() {
   const post = postData.data;
 
   const isAuthor = user ? user.id === post.authorId : false;
+
+  useEffect(() => {
+    const storedToast = sessionStorage.getItem("flash_edit_post_error_toast");
+
+    if (storedToast) {
+      const { title, description } = JSON.parse(storedToast);
+      toast.error(title, {
+        description,
+      });
+      sessionStorage.removeItem("flash_edit_post_error_toast");
+    }
+  }, []);
 
   return (
     <div>

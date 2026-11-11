@@ -6,7 +6,7 @@ import {
 import api from "@/lib/axios";
 import { normalizeApiError } from "@/lib/errorHelper";
 import { withMinDelay } from "@/lib/loaderUtils";
-import { replace } from "react-router-dom";
+import { redirect, replace } from "react-router-dom";
 
 function validateTitle(value) {
   if (!value.trim()) return [{ message: "Post title is required." }];
@@ -90,9 +90,69 @@ async function viewPostLoader({ params }) {
   }
 }
 
+async function editPostLoader({ params }) {
+  try {
+    const response = await api.get(`/posts/${params.slug}/edit`);
+
+    return response.data;
+  } catch (error) {
+    const status = error.response?.status;
+
+    // If unauthorized, set session storage toast and redirect to public post view
+    if (status === 403) {
+      sessionStorage.setItem(
+        "flash_edit_post_error_toast",
+        JSON.stringify({
+          title: "Access Denied",
+          description: "You can only edit your own posts.",
+        })
+      );
+      throw redirect(`/post/${params.slug}`);
+    }
+
+    if (status === 404) {
+      throw Response.json(
+        {
+          message:
+            "The post you are looking to edit does not exist or has been removed.",
+        },
+        { status: 404 }
+      );
+    }
+    return normalizeApiError(error);
+  }
+}
+
+async function handleEditPost({ content, title, subtitle, slug }) {
+  try {
+    const response = await withMinDelay(
+      api.patch(`/posts/${slug}`, {
+        content,
+        title,
+        subtitle,
+      }),
+      150
+    );
+
+    const dataObj = response.data.data;
+    return replace(`/post/${dataObj.slug}`);
+  } catch (error) {
+    return normalizeApiError(error);
+  }
+}
+
+async function editPostAction({ request, params }) {
+  const formData = await request.formData();
+  const data = Object.fromEntries(formData);
+
+  return handleEditPost({ ...data, slug: params.slug });
+}
+
 export {
   createNewPostAction,
   viewPostLoader,
+  editPostLoader,
+  editPostAction,
   validateTitle,
   validateSubtitle,
   validateContent,
