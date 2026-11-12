@@ -9,7 +9,7 @@ function restrictIfAuthenticated(req, res, next) {
     }
 
     if (user) {
-      return res.status(403).json({
+      return res.status(409).json({
         message: "You are already authenticated",
       });
     }

@@ -1,3 +1,4 @@
+import { redirect } from "react-router-dom";
 import api from "./axios";
 import { normalizeApiError } from "./errorHelper.js";
 
@@ -10,6 +11,12 @@ async function handleLogin({ email, password }) {
 
     return res.data;
   } catch (err) {
+    const status = err?.status;
+
+    if (status === 409) {
+      throw redirect("/");
+    }
+
     return normalizeApiError(err);
   }
 }
