@@ -101,7 +101,7 @@ async function editPostLoader({ params }) {
     // If unauthorized, set session storage toast and redirect to public post view
     if (status === 403) {
       sessionStorage.setItem(
-        "flash_edit_post_error_toast",
+        "flash_post_error_toast",
         JSON.stringify({
           title: "Access Denied",
           description: "You can only edit your own posts.",
