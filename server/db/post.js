@@ -6,6 +6,9 @@ import prisma from "./prisma.js";
 async function getPosts(limit, cursor) {
   try {
     const posts = await prisma.post.findMany({
+      where: {
+        published: true,
+      },
       take: limit + 1,
       skip: cursor ? 1 : 0,
       cursor: cursor ? { slug: cursor } : undefined,
