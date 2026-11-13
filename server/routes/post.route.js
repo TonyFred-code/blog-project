@@ -2,21 +2,23 @@ import { Router } from "express";
 import {
   createPost,
   getPosts,
-  getPostToBeEdited,
+  getOwnPost,
   updatePost,
   viewPost,
 } from "../controller/post.controller.js";
 import { postValidationRules } from "../validator/post.validator.js";
 import { handleValidationError } from "../validator/validationHandler.js";
 import { jwtStrategyAuth } from "../middleware/authGuards.js";
+import { postOwnershipGuard } from "../middleware/postGuards.js";
 
 const postRouter = Router();
 
 postRouter.get("/", getPosts);
-postRouter.get("/:slug/edit", jwtStrategyAuth, getPostToBeEdited);
+postRouter.get("/:slug/edit", jwtStrategyAuth, postOwnershipGuard, getOwnPost);
 postRouter.patch(
   "/:slug",
   jwtStrategyAuth,
+  postOwnershipGuard,
   postValidationRules,
   handleValidationError,
   updatePost

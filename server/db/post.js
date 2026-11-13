@@ -1,4 +1,5 @@
 import { POST_ERROR_CODES } from "../constants/errorCodes.js";
+import { Prisma } from "../generated/prisma/index.js";
 import { AppError } from "../lib/errorUtils.js";
 import prisma from "./prisma.js";
 
@@ -66,25 +67,8 @@ async function createPost(content, authorId, title, subtitle, slug) {
 
 async function updatePost(content, authorId, title, subtitle, slug) {
   try {
-    const post = await prisma.post.findUnique({
-      where: { slug },
-      select: { authorId: true },
-    });
-
-    if (!post) {
-      throw new AppError(
-        "Post not found",
-        404,
-        POST_ERROR_CODES.POST_NOT_FOUND
-      );
-    }
-
-    if (post.authorId !== authorId) {
-      throw new AppError("Unauthorized", 403, POST_ERROR_CODES.UNAUTHORIZED);
-    }
-
     const updatedPost = await prisma.post.update({
-      where: { slug },
+      where: { slug, authorId },
       data: {
         content,
         title,
@@ -94,7 +78,8 @@ async function updatePost(content, authorId, title, subtitle, slug) {
 
     return updatedPost;
   } catch (error) {
-    if (error instanceof AppError) throw error;
+    if (error instanceof Prisma.PrismaClientKnownRequestError) throw error;
+
     console.error(error);
     throw new AppError(
       "Failed to update post",

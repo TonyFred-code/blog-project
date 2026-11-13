@@ -1,10 +1,14 @@
-import { POST_ERROR_CODES } from "../constants/errorCodes.js";
+import {
+  POST_ERROR_CODES,
+  PRISMA_ERROR_CODES,
+} from "../constants/errorCodes.js";
 import {
   createPost as createPostDB,
   getPostBySlug as getPostBySlugDB,
   getPosts as getPostsDB,
   updatePost as updatePostDB,
 } from "../db/post.js";
+import { Prisma } from "../generated/prisma/index.js";
 import { AppError } from "../lib/errorUtils.js";
 import { generateHashedSlug } from "../lib/postUtils.js";
 
@@ -42,42 +46,61 @@ async function getPosts(req, res) {
 }
 
 async function updatePost(req, res) {
-  const userId = req.user.id;
-  const slug = req.params.slug;
-  const { content, title, subtitle } = req.body;
+  const { slug } = req.params;
+  const { id: userId } = req.user;
+  const post = req.post;
+
+  if (!post) {
+    console.error("[POST]: Could not find post on the request object.");
+
+    return res.status(500).json({
+      success: false,
+      errors: [],
+      message: "Internal server error. Please try again later.",
+    });
+  }
+
+  const { content, subtitle, title } = req.body;
 
   try {
-    const post = await updatePostDB(content, userId, title, subtitle, slug);
+    const updatedPost = await updatePostDB(
+      content,
+      userId,
+      title,
+      subtitle,
+      slug
+    );
     return res.status(200).json({
       success: true,
-      data: post,
+      data: updatedPost,
     });
   } catch (error) {
-    if (error instanceof AppError) {
-      let message = "Something went wrong. Please try again later.";
+    let message,
+      statusCode = 500;
+
+    if (
+      error instanceof AppError ||
+      error instanceof Prisma.PrismaClientKnownRequestError
+    ) {
+      statusCode = error.statusCode || error.code;
       if (error.errorCode === POST_ERROR_CODES.POST_UPDATE_FAILED) {
         message = "Failed to update post. Please try again.";
-      } else if (error.errorCode === POST_ERROR_CODES.POST_NOT_FOUND) {
+      } else if (
+        error.errorCode === POST_ERROR_CODES.POST_NOT_FOUND ||
+        error.code === PRISMA_ERROR_CODES.RECORD_NOT_FOUND
+      ) {
         message = "Post not found. Please try again later.";
       } else if (error.errorCode === POST_ERROR_CODES.UNAUTHORIZED) {
         message = "You are not authorized to update this post.";
       }
-      return res.status(error.statusCode).json({
-        success: false,
-        message,
-        errors: [
-          {
-            field: "general",
-            message,
-          },
-        ],
-      });
     }
 
-    return res.status(500).json({
+    return res.status(statusCode).json({
       success: false,
-      message: "Internal server error. Please try again later.",
-      errors: [{ field: "general", message: "Internal server error." }],
+      message: message || "Internal server error. Please try again later.",
+      errors: [
+        { field: "general", message: message || "Internal server error." },
+      ],
     });
   }
 }
@@ -121,38 +144,11 @@ async function createPost(req, res) {
   }
 }
 
-async function getPostToBeEdited(req, res) {
-  const slug = req.params.slug;
-  const userId = req.user.id;
+function getOwnPost(req, res) {
+  const post = req.post;
 
-  try {
-    const post = await getPostBySlugDB(slug);
-
-    if (post.authorId !== userId) {
-      return res.status(403).json({
-        success: false,
-        message: "Non authored post edit is unauthorized.",
-        errors: [],
-      });
-    }
-
-    return res.status(200).json({
-      data: post,
-    });
-  } catch (error) {
-    if (error instanceof AppError) {
-      let errMsg = "Something went wrong. Please try again later.";
-
-      if (error.errorCode === POST_ERROR_CODES.POST_NOT_FOUND) {
-        errMsg = "Post not found. Please try again.";
-      }
-
-      return res.status(error.statusCode).json({
-        success: false,
-        message: errMsg,
-        errors: [],
-      });
-    }
+  if (!post) {
+    console.error("[POST]: Could not find post on the request object.");
 
     return res.status(500).json({
       success: false,
@@ -160,6 +156,11 @@ async function getPostToBeEdited(req, res) {
       message: "Internal server error. Please try again later.",
     });
   }
+
+  return res.status(200).json({
+    success: true,
+    data: post,
+  });
 }
 
 async function viewPost(req, res) {
@@ -193,4 +194,4 @@ async function viewPost(req, res) {
   }
 }
 
-export { createPost, viewPost, getPosts, getPostToBeEdited, updatePost };
+export { createPost, viewPost, getPosts, getOwnPost, updatePost };
