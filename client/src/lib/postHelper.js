@@ -148,6 +148,39 @@ async function editPostAction({ request, params }) {
   return handleEditPost({ ...data, slug: params.slug });
 }
 
+async function managePostLoader({ params }) {
+  try {
+    const response = await api.get(`/posts/${params.slug}/manage`);
+
+    return response.data;
+  } catch (error) {
+    const status = error.response?.status;
+
+    // If unauthorized, set session storage toast and redirect to public post view
+    if (status === 403) {
+      sessionStorage.setItem(
+        "flash_post_error_toast",
+        JSON.stringify({
+          title: "Access Denied",
+          description: "You can only manage your own posts.",
+        })
+      );
+      throw redirect(`/post/${params.slug}`);
+    }
+
+    if (status === 404) {
+      throw Response.json(
+        {
+          message:
+            "The post you are looking to manage does not exist or has been removed.",
+        },
+        { status: 404 }
+      );
+    }
+    return normalizeApiError(error);
+  }
+}
+
 export {
   createNewPostAction,
   viewPostLoader,
@@ -156,4 +189,5 @@ export {
   validateTitle,
   validateSubtitle,
   validateContent,
+  managePostLoader,
 };

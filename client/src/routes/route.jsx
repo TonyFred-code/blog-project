@@ -12,6 +12,7 @@ import {
   createNewPostAction,
   editPostAction,
   editPostLoader,
+  managePostLoader,
   viewPostLoader,
 } from "@/lib/postHelper";
 import Post from "@/pages/Post";
@@ -19,6 +20,7 @@ import { indexLoader, postsLoader } from "@/lib/indexHelper";
 import ErrorPage from "@/pages/ErrorPage";
 import EditPost from "@/pages/EditPost";
 import { Loader } from "lucide-react";
+import ManagePost from "@/pages/ManagePost";
 
 const router = createBrowserRouter([
   {
@@ -72,6 +74,15 @@ const router = createBrowserRouter([
         ),
         loader: editPostLoader,
         action: editPostAction,
+      },
+      {
+        path: "post/:slug/manage",
+        element: (
+          <ProtectedRoute>
+            <ManagePost />
+          </ProtectedRoute>
+        ),
+        loader: managePostLoader,
       },
       {
         path: "post/:slug",

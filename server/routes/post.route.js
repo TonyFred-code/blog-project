@@ -14,6 +14,12 @@ import { postOwnershipGuard } from "../middleware/postGuards.js";
 const postRouter = Router();
 
 postRouter.get("/", getPosts);
+postRouter.get(
+  "/:slug/manage",
+  jwtStrategyAuth,
+  postOwnershipGuard,
+  getOwnPost
+);
 postRouter.get("/:slug/edit", jwtStrategyAuth, postOwnershipGuard, getOwnPost);
 postRouter.patch(
   "/:slug",
