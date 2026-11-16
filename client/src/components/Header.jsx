@@ -15,6 +15,7 @@ export default function Header() {
         >
           <img
             src="/weblog-logo.svg"
+            alt="Blog App logo"
             className="size-9 transition-transform group-hover:scale-105"
           />
           <span className="hidden md:inline font-medium">BLOG APP</span>

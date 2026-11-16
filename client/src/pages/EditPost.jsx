@@ -224,6 +224,7 @@ export default function EditPost() {
             >
               <img
                 src="/weblog-logo.svg"
+                alt="Blog App logo"
                 className="size-9 transition-transform group-hover:scale-105"
               />
               <span className="font-medium hidden md:inline">BLOG APP</span>
