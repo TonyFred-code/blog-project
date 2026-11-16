@@ -10,7 +10,6 @@ nProgress.configure({
 export default function TopLoader() {
   const location = useLocation();
   const prevLocationRef = useRef(location.pathname);
-  const isLoadingRef = useRef(false);
   const navigation = useNavigation();
 
   useEffect(() => {
@@ -19,13 +18,8 @@ export default function TopLoader() {
       navigation.location?.pathname !== prevLocationRef.current
     ) {
       nProgress.start();
-      isLoadingRef.current = true;
-    } else if (navigation.state === "idle") {
-      if (isLoadingRef.current) {
-        nProgress.done();
-        isLoadingRef.current = false;
-      }
-
+    } else {
+      nProgress.done();
       prevLocationRef.current = location.pathname;
     }
   }, [navigation.state, navigation.location?.pathname, location.pathname]);
