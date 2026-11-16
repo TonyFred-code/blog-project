@@ -6,6 +6,7 @@ import {
 import api from "@/lib/axios";
 import { normalizeApiError } from "@/lib/errorHelper";
 import { withMinDelay } from "@/lib/loaderUtils";
+import { AxiosError } from "axios";
 import { redirect, replace } from "react-router-dom";
 
 function validateTitle(value) {
@@ -181,6 +182,70 @@ async function managePostLoader({ params }) {
   }
 }
 
+async function handleDeleteAction({ params }) {
+  try {
+    await withMinDelay(api.delete(`/posts/${params.slug}`));
+
+    sessionStorage.setItem(
+      "flash_manage_post_info_toast",
+      JSON.stringify({
+        title: "Post deleted",
+        description: "Post has been successfully deleted.",
+      })
+    );
+
+    return redirect("/");
+  } catch (error) {
+    const status = error.response?.status;
+
+    if (status === 404) {
+      sessionStorage.setItem(
+        "flash_manage_post_info_toast",
+        JSON.stringify({
+          title: "Post deleted",
+          description: "Post not found or has been deleted.",
+        })
+      );
+
+      return redirect("/");
+    }
+
+    if (status === 403) {
+      // probably redundant
+      sessionStorage.setItem(
+        "flash_post_error_toast",
+        JSON.stringify({
+          title: "Access Denied",
+          description: "You can only delete your own posts.",
+        })
+      );
+      return redirect(`/post/${params.slug}`);
+    }
+
+    return {
+      success: false,
+      message: "Failed to delete post",
+      method: "DELETE",
+    };
+  }
+}
+
+async function managePostAction({ params, request }) {
+  switch (request.method) {
+    case "DELETE":
+      return await handleDeleteAction({ params });
+    default:
+      sessionStorage.setItem(
+        "flash_manage_post_error_toast",
+        JSON.stringify({
+          title: "Unknown action",
+          description: "Unable to process unknown manage post action.",
+        })
+      );
+      return normalizeApiError(new AxiosError("Unknown request type"));
+  }
+}
+
 export {
   createNewPostAction,
   viewPostLoader,
@@ -190,4 +255,5 @@ export {
   validateSubtitle,
   validateContent,
   managePostLoader,
+  managePostAction,
 };

@@ -8,17 +8,75 @@ import {
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useFetcher, useLoaderData } from "react-router-dom";
+import {
+  Form,
+  useActionData,
+  useFetcher,
+  useLoaderData,
+  useNavigation,
+} from "react-router-dom";
 import { format } from "date-fns";
 import ButtonLink from "@/components/LinkButton";
 import UnderConstruction from "@/components/UnderConstruction";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Field } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function ManagePost() {
+  const navigation = useNavigation();
+  const [delPostText, setDelPostText] = useState("");
   const fetcher = useFetcher();
   const { data: post } = useLoaderData();
+  const actionData = useActionData();
+
   const optimisticPublished = fetcher.formData
     ? fetcher.formData.get("published") === "true"
     : post.published;
+
+  const CONFIRMATION_TEXT = `sudo rm post ${post.slug.split("-").at(-1)}`;
+  const delPostIsConfirmed = delPostText === CONFIRMATION_TEXT;
+  const isDeleting =
+    navigation.state === "submitting" && navigation.formMethod === "DELETE";
+
+  useEffect(() => {
+    if (!actionData) return;
+
+    if (!actionData.success) {
+      if (actionData.method === "DELETE") {
+        toast.error("Operation Failed", {
+          description:
+            actionData.message || "Failed to perform delete operation.",
+        });
+      } else {
+        const storedToast = sessionStorage.getItem(
+          "flash_manage_post_error_toast"
+        );
+
+        if (storedToast) {
+          const { title, description } = JSON.parse(storedToast);
+
+          toast.error(title, {
+            description,
+          });
+
+          sessionStorage.removeItem("flash_manage_post_error_toast");
+        }
+      }
+    }
+  }, [actionData]);
 
   return (
     <div className="flex flex-col relative gap-4">
@@ -146,6 +204,76 @@ export default function ManagePost() {
                     </p>
                   </div>
                   <UnderConstruction />
+                </section>
+                <Separator />
+                <section className="space-y-3 p-3">
+                  <header>
+                    <h3 className="font-medium text-xl">Delete Post</h3>
+                    <p className="text-secondary-foreground">
+                      Permanently remove your post
+                    </p>
+                  </header>
+                  <p className="bg-destructive/5 p-3 rounded-md">
+                    <strong>Warning</strong>: Deleting your post is an
+                    irrevocable action. Consider unpublishing your post instead.
+                  </p>
+                  <AlertDialog
+                    onOpenChange={(open) => !open && setDelPostText("")}
+                  >
+                    <AlertDialogTrigger
+                      render={<Button variant="destructive" />}
+                    >
+                      Delete post
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>
+                          Are you absolutely sure?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently
+                          delete this post from our servers.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <Form
+                        id="delete_post_form"
+                        method="delete"
+                        action={`/post/${post.slug}/manage`}
+                      >
+                        <p>
+                          To confirm, type <br />
+                          <code className="rounded font-semibold font-mono text-sm text-destructive select-none">
+                            {CONFIRMATION_TEXT}
+                          </code>
+                        </p>
+                        <Field className="py-3">
+                          <Input
+                            type="text"
+                            value={delPostText}
+                            onChange={(e) => setDelPostText(e.target.value)}
+                          />
+                        </Field>
+                      </Form>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <Button
+                          type="submit"
+                          form="delete_post_form"
+                          variant="destructive"
+                          disabled={!delPostIsConfirmed || isDeleting}
+                        >
+                          {isDeleting ? (
+                            <>
+                              <Spinner />
+                              <span>Deleting...</span>
+                            </>
+                          ) : (
+                            <span>Delete</span>
+                          )}
+                        </Button>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </section>
               </CardContent>
             </Card>

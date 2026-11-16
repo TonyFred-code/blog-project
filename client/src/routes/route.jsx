@@ -12,6 +12,7 @@ import {
   createNewPostAction,
   editPostAction,
   editPostLoader,
+  managePostAction,
   managePostLoader,
   viewPostLoader,
 } from "@/lib/postHelper";
@@ -83,6 +84,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         loader: managePostLoader,
+        action: managePostAction,
       },
       {
         path: "post/:slug",

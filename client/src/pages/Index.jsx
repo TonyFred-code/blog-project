@@ -23,6 +23,20 @@ export default function Index() {
     }
   }, [error]);
 
+  useEffect(() => {
+    const storedToast = sessionStorage.getItem("flash_manage_post_info_toast");
+
+    if (storedToast) {
+      const { title, description } = JSON.parse(storedToast);
+
+      toast.info(title, {
+        description,
+      });
+
+      sessionStorage.removeItem("flash_manage_post_info_toast");
+    }
+  }, []);
+
   return (
     <>
       <div className="flex flex-col relative">
