@@ -1,6 +1,7 @@
 import { remark } from "remark";
 import strip from "strip-markdown";
-import { nanoid } from "nanoid";
+import { customAlphabet } from "nanoid";
+import { nolookalikes } from "nanoid-dictionary";
 
 function slugify(text) {
   return text
@@ -17,7 +18,8 @@ function slugify(text) {
 
 function generateHashedSlug(title) {
   const baseSlug = slugify(title);
-  const shortId = nanoid(6);
+  const nanoid = customAlphabet(nolookalikes, 6);
+  const shortId = nanoid();
 
   return `${baseSlug}-${shortId}`;
 }

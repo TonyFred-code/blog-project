@@ -1,4 +1,5 @@
 import { hashPassword } from "../../lib/passwordUtils.js";
+import { generateHashedSlug } from "../../lib/postUtils.js";
 import prisma from "../prisma.js";
 
 const usersData = [
@@ -18,7 +19,6 @@ const postsData = [
   {
     title: "Hello, World",
     subtitle: "My very first post",
-    slug: "hello-world",
     content: "Welcome to the blog. Excited to start sharing what I learn.",
     published: true,
     authorIndex: 0,
@@ -26,7 +26,6 @@ const postsData = [
   {
     title: "Why I Love TypeScript",
     subtitle: "Types as documentation",
-    slug: "why-i-love-typescript",
     content: "Types catch bugs early and double as living documentation.",
     published: true,
     authorIndex: 1,
@@ -34,7 +33,6 @@ const postsData = [
   {
     title: "Getting Started with Prisma",
     subtitle: "An ORM that feels natural",
-    slug: "getting-started-with-prisma",
     content:
       "Define a schema, run a migration, and query with full type safety.",
     published: true,
@@ -43,7 +41,6 @@ const postsData = [
   {
     title: "Understanding JWT Refresh Tokens",
     subtitle: "Short-lived access, long-lived refresh",
-    slug: "understanding-jwt-refresh-tokens",
     content:
       "Rotate refresh tokens on every use and revoke the whole family on reuse.",
     published: true,
@@ -52,7 +49,6 @@ const postsData = [
   {
     title: "CSS Grid in 5 Minutes",
     subtitle: null,
-    slug: "css-grid-in-5-minutes",
     content:
       "Grid makes two-dimensional layouts simple. Start with grid-template-columns.",
     published: true,
@@ -61,7 +57,6 @@ const postsData = [
   {
     title: "Flexbox vs Grid",
     subtitle: "Which one should you use?",
-    slug: "flexbox-vs-grid",
     content:
       "Flexbox for one dimension, Grid for two. They also work great together.",
     published: true,
@@ -70,7 +65,6 @@ const postsData = [
   {
     title: "My Morning Dev Routine",
     subtitle: "Small habits, big gains",
-    slug: "my-morning-dev-routine",
     content:
       "Coffee, a quick review of yesterday's notes, then one focused hour of coding.",
     published: true,
@@ -79,7 +73,6 @@ const postsData = [
   {
     title: "Debugging Like a Detective",
     subtitle: "Follow the evidence",
-    slug: "debugging-like-a-detective",
     content:
       "Reproduce the bug, form a hypothesis, test it, and repeat until solved.",
     published: true,
@@ -88,7 +81,6 @@ const postsData = [
   {
     title: "Git Branching Basics",
     subtitle: null,
-    slug: "git-branching-basics",
     content: "Branch often, commit small, and keep main clean and deployable.",
     published: true,
     authorIndex: 0,
@@ -96,7 +88,6 @@ const postsData = [
   {
     title: "Writing Better Commit Messages",
     subtitle: "Future you will say thanks",
-    slug: "writing-better-commit-messages",
     content: "Use the imperative mood and explain the why, not just the what.",
     published: true,
     authorIndex: 1,
@@ -104,7 +95,6 @@ const postsData = [
   {
     title: "React State, Simplified",
     subtitle: "useState without the confusion",
-    slug: "react-state-simplified",
     content:
       "State is just memory for your component. Update it, and React re-renders.",
     published: true,
@@ -113,7 +103,6 @@ const postsData = [
   {
     title: "When to Use useEffect",
     subtitle: "And when not to",
-    slug: "when-to-use-useeffect",
     content:
       "Use it to sync with external systems, not to derive values from props.",
     published: true,
@@ -122,7 +111,6 @@ const postsData = [
   {
     title: "Express Middleware Explained",
     subtitle: null,
-    slug: "express-middleware-explained",
     content:
       "Middleware are functions that run between the request and the response.",
     published: true,
@@ -131,7 +119,6 @@ const postsData = [
   {
     title: "REST API Design Tips",
     subtitle: "Keep it predictable",
-    slug: "rest-api-design-tips",
     content:
       "Use nouns for routes, proper status codes, and consistent error shapes.",
     published: true,
@@ -140,7 +127,6 @@ const postsData = [
   {
     title: "Password Hashing 101",
     subtitle: "Never store plain text",
-    slug: "password-hashing-101",
     content:
       "Use bcrypt or argon2 with a proper cost factor. Never roll your own crypto.",
     published: true,
@@ -149,7 +135,6 @@ const postsData = [
   {
     title: "Postgres Indexes in Plain English",
     subtitle: "Faster reads, slower writes",
-    slug: "postgres-indexes-plain-english",
     content: "An index is like a book's table of contents for your rows.",
     published: true,
     authorIndex: 3,
@@ -157,7 +142,6 @@ const postsData = [
   {
     title: "Deploying to Vercel",
     subtitle: "From push to production",
-    slug: "deploying-to-vercel",
     content:
       "Connect your repo, set env variables, and every push becomes a deploy.",
     published: true,
@@ -166,7 +150,6 @@ const postsData = [
   {
     title: "Dark Mode Done Right",
     subtitle: null,
-    slug: "dark-mode-done-right",
     content:
       "Use CSS variables and respect the user's prefers-color-scheme setting.",
     published: true,
@@ -175,7 +158,6 @@ const postsData = [
   {
     title: "Accessibility Is Not Optional",
     subtitle: "Build for everyone",
-    slug: "accessibility-is-not-optional",
     content:
       "Semantic HTML, good contrast, and keyboard support go a long way.",
     published: true,
@@ -184,7 +166,6 @@ const postsData = [
   {
     title: "Learning in Public",
     subtitle: "Share the messy middle",
-    slug: "learning-in-public",
     content: "Writing about what you learn solidifies it and helps others too.",
     published: true,
     authorIndex: 3,
@@ -192,7 +173,6 @@ const postsData = [
   {
     title: "Draft: Testing Strategies",
     subtitle: "Work in progress",
-    slug: "draft-testing-strategies",
     content:
       "Notes on unit, integration, and end-to-end tests. To be expanded.",
     published: false,
@@ -201,7 +181,6 @@ const postsData = [
   {
     title: "Draft: Docker for Beginners",
     subtitle: "Coming soon",
-    slug: "draft-docker-for-beginners",
     content: "Containers explained simply. Outline only for now.",
     published: false,
     authorIndex: 1,
@@ -209,7 +188,6 @@ const postsData = [
   {
     title: "Draft: Web Performance Checklist",
     subtitle: null,
-    slug: "draft-web-performance-checklist",
     content: "Images, fonts, bundles, and caching. Still gathering ideas.",
     published: false,
     authorIndex: 3,
@@ -217,7 +195,6 @@ const postsData = [
   {
     title: "Draft: Intro to Embedded Systems",
     subtitle: "A software dev's detour",
-    slug: "draft-intro-to-embedded-systems",
     content:
       "Microcontrollers, firmware, and why constraints make you a better dev.",
     published: false,
@@ -244,10 +221,12 @@ async function main() {
 
   // Posts (idempotent via upsert on unique slug)
   for (const { authorIndex, ...post } of postsData) {
+    const slug = generateHashedSlug(post.title);
+
     await prisma.post.upsert({
-      where: { slug: post.slug },
-      update: { ...post, authorId: users[authorIndex].id },
-      create: { ...post, authorId: users[authorIndex].id },
+      where: { slug },
+      update: { ...post, slug, authorId: users[authorIndex].id },
+      create: { ...post, slug, authorId: users[authorIndex].id },
     });
   }
   console.log(`Seeded ${postsData.length} post(s).`);
