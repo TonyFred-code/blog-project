@@ -44,13 +44,13 @@ export default function EditPost() {
   }));
   const [manualOverride, setManualOverride] = useState({
     stage: null,
-    targetActionData: null,
+    targetActionData: undefined,
   });
   const [formFieldModified, setFormFieldModified] = useState({
     title: false,
     subtitle: false,
     content: false,
-    response: null,
+    response: undefined,
   });
   const [clientErrors, setClientErrors] = useState({
     title: [],
@@ -306,6 +306,7 @@ export default function EditPost() {
                   <Input
                     id="title"
                     type={"text"}
+                    autoFocus
                     aria-invalid={errors.title.length > 0}
                     value={title}
                     onChange={(e) => {

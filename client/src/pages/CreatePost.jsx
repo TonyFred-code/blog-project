@@ -42,11 +42,11 @@ export default function CreatePost() {
     title: false,
     subtitle: false,
     content: false,
-    response: null,
+    response: undefined,
   });
   const [manualOverride, setManualOverride] = useState({
     stage: null,
-    targetActionData: null,
+    targetActionData: undefined,
   });
   const [clientErrors, setClientErrors] = useState({
     title: [],
@@ -301,6 +301,7 @@ export default function CreatePost() {
                     placeholder="Post title..."
                     name="title"
                     // maxLength={MAX_TITLE_CHARS_COUNT}
+                    autoFocus
                     id="title"
                     aria-invalid={errors.title.length > 0}
                     value={title}
