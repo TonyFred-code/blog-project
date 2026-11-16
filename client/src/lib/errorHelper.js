@@ -1,6 +1,15 @@
 import { AxiosError } from "axios";
 
 function normalizeApiError(err) {
+  if (err?.isNetworkError) {
+    throw Response.json(
+      {
+        message: err.message,
+      },
+      { status: 503, statusText: "Service unavailable" }
+    );
+  }
+
   if (err instanceof AxiosError && err.response?.data) {
     const { message, errors } = err.response.data;
 
