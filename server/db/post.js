@@ -1,4 +1,7 @@
-import { POST_ERROR_CODES } from "../constants/errorCodes.js";
+import {
+  POST_ERROR_CODES,
+  PRISMA_ERROR_CODES,
+} from "../constants/errorCodes.js";
 import { Prisma } from "../generated/prisma/index.js";
 import { AppError } from "../lib/errorUtils.js";
 import prisma from "./prisma.js";
@@ -106,4 +109,29 @@ async function getPostBySlug(slug) {
   return post;
 }
 
-export { createPost, getPostBySlug, getPosts, updatePost };
+async function deletePost(slug) {
+  try {
+    await prisma.post.delete({
+      where: { slug },
+    });
+
+    return true;
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === PRISMA_ERROR_CODES.RECORD_NOT_FOUND
+    ) {
+      return true;
+    }
+
+    console.error(error);
+
+    throw new AppError(
+      "Failed to delete post.",
+      500,
+      POST_ERROR_CODES.POST_DELETE_FAILED
+    );
+  }
+}
+
+export { createPost, getPostBySlug, getPosts, updatePost, deletePost };

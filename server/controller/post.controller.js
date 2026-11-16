@@ -7,10 +7,32 @@ import {
   getPostBySlug as getPostBySlugDB,
   getPosts as getPostsDB,
   updatePost as updatePostDB,
+  deletePost as deletePostDB,
 } from "../db/post.js";
 import { Prisma } from "../generated/prisma/index.js";
 import { AppError } from "../lib/errorUtils.js";
 import { generateHashedSlug } from "../lib/postUtils.js";
+
+async function deletePost(req, res) {
+  const { slug } = req.params;
+
+  try {
+    await deletePostDB(slug);
+
+    return res.status(200).json({
+      success: true,
+      message: "Post has been deleted successfully.",
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(error.statusCode || 500).json({
+      success: false,
+      message:
+        error.message || "Internal server error. Please try again later.",
+      errors: [{ field: "general", message: "Failed to delete post" }],
+    });
+  }
+}
 
 async function getPosts(req, res) {
   const limit = 10;
@@ -82,13 +104,14 @@ async function updatePost(req, res) {
       error instanceof AppError ||
       error instanceof Prisma.PrismaClientKnownRequestError
     ) {
-      statusCode = error.statusCode || error.code;
+      statusCode = error.statusCode || 500;
       if (error.errorCode === POST_ERROR_CODES.POST_UPDATE_FAILED) {
         message = "Failed to update post. Please try again.";
       } else if (
         error.errorCode === POST_ERROR_CODES.POST_NOT_FOUND ||
         error.code === PRISMA_ERROR_CODES.RECORD_NOT_FOUND
       ) {
+        statusCode = 404;
         message = "Post not found. Please try again later.";
       } else if (error.errorCode === POST_ERROR_CODES.UNAUTHORIZED) {
         message = "You are not authorized to update this post.";
@@ -194,4 +217,4 @@ async function viewPost(req, res) {
   }
 }
 
-export { createPost, viewPost, getPosts, getOwnPost, updatePost };
+export { createPost, viewPost, getPosts, getOwnPost, updatePost, deletePost };

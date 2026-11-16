@@ -5,6 +5,7 @@ import {
   getOwnPost,
   updatePost,
   viewPost,
+  deletePost,
 } from "../controller/post.controller.js";
 import { postValidationRules } from "../validator/post.validator.js";
 import { handleValidationError } from "../validator/validationHandler.js";
@@ -29,6 +30,7 @@ postRouter.patch(
   handleValidationError,
   updatePost
 );
+postRouter.delete("/:slug", jwtStrategyAuth, postOwnershipGuard, deletePost);
 postRouter.get("/:slug", viewPost);
 postRouter.post(
   "/",
