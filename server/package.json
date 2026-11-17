@@ -30,6 +30,7 @@
     "strip-markdown": "^6.0.0"
   },
   "devDependencies": {
+    "nodemon": "^3.1.14",
     "prisma": "^7.10.0"
   }
 }
