@@ -60,6 +60,20 @@ function shouldSkipRefresh(url = "") {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
+    const isServerOffline =
+      !error.response || [502, 503, 504].includes(error.response?.status);
+
+    if (isServerOffline) {
+      return Promise.reject({
+        isNetworkError: true,
+        title: "Connection Failed",
+        status: 503,
+        message:
+          "Unable to reach the server. Please check your connection or try again.",
+        originalError: error,
+      });
+    }
+
     const originalRequest = error.config;
 
     if (

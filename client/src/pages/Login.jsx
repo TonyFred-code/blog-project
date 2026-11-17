@@ -21,13 +21,17 @@ import {
   Form,
   Link,
   useActionData,
-  useNavigate,
+  useLocation,
   useNavigation,
+  useSearchParams,
 } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Login() {
-  const navigate = useNavigate();
   const navigation = useNavigation();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirectTo");
   const actionData = useActionData();
   const { login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -89,9 +93,16 @@ export default function Login() {
 
     if (actionData.token && actionData.user) {
       login(actionData.user, actionData.token);
-      navigate("/");
     }
-  }, [actionData, login, navigate]);
+  }, [actionData, login]);
+
+  useEffect(() => {
+    if (redirectTo && location.state?.fromProtected) {
+      toast.info("Please log in to continue.", { id: "toast_login" });
+    }
+
+    return () => toast.dismiss("toast_login");
+  }, [redirectTo, location.state?.fromProtected]);
 
   return (
     <>
@@ -114,11 +125,7 @@ export default function Login() {
                 </CardDescription>
               </CardHeader>
 
-              <Form
-                method="post"
-                action="/login"
-                className="flex flex-col gap-3"
-              >
+              <Form method="post" className="flex flex-col gap-3">
                 <CardContent className="space-y-4">
                   {errors.general && (
                     <div className="flex items-center gap-2 rounded-lg bg-destructive/15 p-3 text-sm font-medium text-destructive border border-destructive/20">

@@ -38,4 +38,4 @@ async function registerAction({ request }) {
   return handleRegister(data);
 }
 
-export { handleRegister, registerAction };
+export { registerAction };
