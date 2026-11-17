@@ -16,7 +16,7 @@ async function postsLoader({ request }) {
     const url = new URL(request.url);
     const cursor = url.searchParams.get("cursor") || "";
 
-    const response = await api.get(`/posts/?cursor=${cursor}`);
+    const response = await api.get(`/posts?cursor=${cursor}`);
 
     return response.data;
   } catch (error) {
