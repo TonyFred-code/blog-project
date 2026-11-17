@@ -27,4 +27,35 @@ function normalizeApiError(err) {
   };
 }
 
-export { normalizeApiError };
+function throwLoaderError(err) {
+  if (err instanceof Response) {
+    throw err;
+  }
+
+  if (err?.isNetworkError) {
+    throw Response.json(
+      {
+        message: err.message,
+      },
+      { status: 503, statusText: "Service unavailable" }
+    );
+  }
+
+  const status = err.response?.status || err.status || 500;
+  const rawMessage = err.response?.data?.message;
+  const message =
+    typeof rawMessage === "string"
+      ? rawMessage
+      : typeof err.message === "string" && err.message
+        ? err.message
+        : "Something went wrong. Please try again.";
+
+  throw Response.json(
+    {
+      message,
+    },
+    { status }
+  );
+}
+
+export { normalizeApiError, throwLoaderError };

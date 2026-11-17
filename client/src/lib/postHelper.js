@@ -4,7 +4,7 @@ import {
   MAX_TITLE_CHARS_COUNT,
 } from "@/constants/postConstants";
 import api from "@/lib/axios";
-import { normalizeApiError } from "@/lib/errorHelper";
+import { normalizeApiError, throwLoaderError } from "@/lib/errorHelper";
 import { withMinDelay } from "@/lib/loaderUtils";
 import { AxiosError } from "axios";
 import { redirect, replace } from "react-router-dom";
@@ -77,7 +77,9 @@ async function viewPostLoader({ params }) {
     const response = await withMinDelay(api.get(`/posts/${params.slug}`));
     return response.data;
   } catch (error) {
-    if (error.status === 404) {
+    const status = error.response?.status || error.status;
+
+    if (status === 404) {
       throw Response.json(
         {
           message:
@@ -87,7 +89,7 @@ async function viewPostLoader({ params }) {
       );
     }
 
-    return normalizeApiError(error);
+    throwLoaderError(error);
   }
 }
 
@@ -97,7 +99,7 @@ async function editPostLoader({ params }) {
 
     return response.data;
   } catch (error) {
-    const status = error.response?.status;
+    const status = error.response?.status || error.status;
 
     // If unauthorized, set session storage toast and redirect to public post view
     if (status === 403) {
@@ -111,16 +113,7 @@ async function editPostLoader({ params }) {
       throw redirect(`/post/${params.slug}`);
     }
 
-    if (status === 404) {
-      throw Response.json(
-        {
-          message:
-            "The post you are looking to edit does not exist or has been removed.",
-        },
-        { status: 404 }
-      );
-    }
-    return normalizeApiError(error);
+    throwLoaderError(error);
   }
 }
 
@@ -155,7 +148,7 @@ async function managePostLoader({ params }) {
 
     return response.data;
   } catch (error) {
-    const status = error.response?.status;
+    const status = error.response?.status || error.status;
 
     // If unauthorized, set session storage toast and redirect to public post view
     if (status === 403) {
@@ -169,16 +162,7 @@ async function managePostLoader({ params }) {
       throw redirect(`/post/${params.slug}`);
     }
 
-    if (status === 404) {
-      throw Response.json(
-        {
-          message:
-            "The post you are looking to manage does not exist or has been removed.",
-        },
-        { status: 404 }
-      );
-    }
-    return normalizeApiError(error);
+    throwLoaderError(error);
   }
 }
 
