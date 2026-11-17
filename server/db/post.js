@@ -22,7 +22,6 @@ async function getPosts(limit, cursor) {
         subtitle: true,
         slug: true,
         createdAt: true,
-        author: { select: { email: true } },
       },
     });
 
