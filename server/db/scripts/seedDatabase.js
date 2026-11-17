@@ -4,7 +4,7 @@ import prisma from "../prisma.js";
 
 const usersData = [
   { email: "alice@example.com", password: "hashed_password_123" },
-  { email: "alfredfaith35@gmail.com", password: "@Q@ue76hLDBS9YS" },
+  { email: "alfred@example.com", password: "@Q@ue76hLDBS9YS" },
   {
     email: "bob@example.com",
     password: "hashed_password_456",
