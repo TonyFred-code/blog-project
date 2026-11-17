@@ -98,6 +98,7 @@ async function getPostBySlug(slug) {
   const post = await prisma.post.findUnique({
     where: {
       slug,
+      published: true,
     },
   });
 
