@@ -285,7 +285,7 @@ export default function EditPost() {
             onSubmit={handleFormSubmit}
           >
             {errors.general && (
-              <div className="flex items-center gap-2 rounded-lg bg-destructive/15 p-3 text-sm font-medium text-destuctive border border-destructive">
+              <div className="flex items-center gap-2 rounded-lg bg-destructive/15 p-3 text-sm font-medium text-destructive border border-destructive">
                 <AlertCircle className="size-4 shrink-0" />
                 <span>{errors.general}</span>
               </div>
