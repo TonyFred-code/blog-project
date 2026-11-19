@@ -107,9 +107,9 @@ export default function Register() {
   return (
     <>
       <title>Register | Blog App</title>
-      <main className="min-h-screen bg-linear-to-br from-background via-primary/5 to-background flex items-center justify-center p-4">
+      <main className="min-h-screen bg-linear-to-br from-background via-primary/10 to-background flex items-center justify-center p-4">
         <div className="w-full max-w-md">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 space-y-8">
+          <div className="bg-background rounded-2xl shadow-2xl p-8 space-y-8">
             <header className="text-center space-y-4">
               <h1 className="text-3xl font-bold">Create Account</h1>
               <p className="text-muted-foreground">

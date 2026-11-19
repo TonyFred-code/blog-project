@@ -2,6 +2,7 @@ import useAuth from "@/hooks/useAuth";
 import ButtonLink from "./LinkButton";
 import ProfileMenu from "./ProfileMenu";
 import { Skeleton } from "@/components/ui/skeleton";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Header() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -27,13 +28,14 @@ export default function Header() {
         <div className="gap-3 flex items-center">
           <ButtonLink to="/login">Login</ButtonLink>
           <ButtonLink to="/register">Register</ButtonLink>
+          <ThemeToggle variant="minimal" />
         </div>
       ) : (
         <div className="gap-3 flex items-center">
           <ButtonLink
             to="/new"
             variant="outline"
-            className="hover:bg-primary hover:text-primary-foreground"
+            className="hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary dark:hover:text-primary-foreground"
           >
             Create post
           </ButtonLink>

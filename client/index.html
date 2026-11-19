@@ -25,6 +25,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blog App</title>
   </head>
+  <script>
+    (() => {
+      try {
+        const stored = localStorage.getItem("blog_theme");
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+
+        const shouldUseDark =
+          stored === "dark" ||
+          (stored === "system" && prefersDark) ||
+          (!stored && prefersDark);
+
+        if (shouldUseDark) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (_) {
+        // ignore and let it default to light
+      }
+    })();
+  </script>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
