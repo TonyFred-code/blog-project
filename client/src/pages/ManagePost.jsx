@@ -79,7 +79,7 @@ export default function ManagePost() {
   }, [actionData]);
 
   return (
-    <div className="flex flex-col relative gap-4">
+    <div className="flex flex-col relative gap-4 flex-1">
       <Header />
       <main className="flex-1 max-w-3xl mx-auto p-3 w-full flex flex-col gap-4">
         <header className="flex justify-between">

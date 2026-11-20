@@ -31,7 +31,7 @@ export default function Post() {
   }, []);
 
   return (
-    <div className="flex flex-col relative">
+    <div className="flex flex-col relative flex-1">
       <Header />
       <div className="flex justify-between py-4 mt-3 w-full max-w-lg mx-auto">
         <div className="flex gap-3 items-center">
