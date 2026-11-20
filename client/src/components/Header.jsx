@@ -15,7 +15,7 @@ export default function Header() {
           className="flex items-center gap-2 text-foreground group"
         >
           <img
-            src="/weblog-logo.svg"
+            src="/weblog-logo-themed.svg"
             alt="Blog App logo"
             className="size-9 transition-transform group-hover:scale-105"
           />
