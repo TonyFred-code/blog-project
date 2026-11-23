@@ -2,6 +2,8 @@ import Header from "@/components/Header";
 import ButtonLink from "@/components/LinkButton";
 import { Button } from "@/components/ui/button";
 import { ServerOff, TriangleAlert } from "lucide-react";
+import nProgress from "nprogress";
+import { useEffect } from "react";
 import { isRouteErrorResponse, useRouteError } from "react-router-dom";
 
 const UNREACHABLE_STATUSES = [502, 503, 504];
@@ -50,6 +52,12 @@ export default function ErrorPage() {
 
   const view = getErrorView(error);
   const Icon = view.icon;
+
+  useEffect(() => {
+    setTimeout(() => {
+      nProgress.done();
+    }, 150);
+  }, []);
 
   return (
     <>
