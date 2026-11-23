@@ -64,4 +64,25 @@ function localStrategyAuth(req, res, next) {
   })(req, res, next);
 }
 
-export { jwtStrategyAuth, localStrategyAuth, handleTokenRevocation };
+function optionalJwtAuth(req, res, next) {
+  passport.authenticate("jwt", { session: false }, (err, user, info) => {
+    if (err) {
+      return res.status(500).json({
+        message: "Internal server error. Please try again later.",
+      });
+    }
+
+    if (user) {
+      req.user = user;
+    }
+
+    return next();
+  })(req, res, next);
+}
+
+export {
+  jwtStrategyAuth,
+  localStrategyAuth,
+  handleTokenRevocation,
+  optionalJwtAuth,
+};

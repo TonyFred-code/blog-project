@@ -94,15 +94,14 @@ async function updatePost(content, authorId, title, subtitle, slug) {
   }
 }
 
-async function getPostBySlug(slug) {
+async function getPostBySlug(slug, authorId) {
   const post = await prisma.post.findUnique({
     where: {
       slug,
-      published: true,
     },
   });
 
-  if (!post) {
+  if (!post || (!post.published && (!authorId || post.authorId !== authorId))) {
     throw new AppError("Post not found", 404, POST_ERROR_CODES.POST_NOT_FOUND);
   }
 

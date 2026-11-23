@@ -9,7 +9,7 @@ import {
 } from "../controller/post.controller.js";
 import { postValidationRules } from "../validator/post.validator.js";
 import { handleValidationError } from "../validator/validationHandler.js";
-import { jwtStrategyAuth } from "../middleware/authGuards.js";
+import { jwtStrategyAuth, optionalJwtAuth } from "../middleware/authGuards.js";
 import { postOwnershipGuard } from "../middleware/postGuards.js";
 
 const postRouter = Router();
@@ -31,7 +31,7 @@ postRouter.patch(
   updatePost
 );
 postRouter.delete("/:slug", jwtStrategyAuth, postOwnershipGuard, deletePost);
-postRouter.get("/:slug", viewPost);
+postRouter.get("/:slug", optionalJwtAuth, viewPost);
 postRouter.post(
   "/",
   jwtStrategyAuth,

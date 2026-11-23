@@ -188,9 +188,10 @@ function getOwnPost(req, res) {
 
 async function viewPost(req, res) {
   const slug = req.params.slug;
+  const authorId = req?.user?.id;
 
   try {
-    const post = await getPostBySlugDB(slug);
+    const post = await getPostBySlugDB(slug, authorId);
     return res.status(200).json({
       data: post,
     });
