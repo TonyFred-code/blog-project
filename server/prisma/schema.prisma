@@ -12,6 +12,12 @@ datasource db {
   provider = "postgresql"
 }
 
+enum PostStatus {
+  PUBLISHED
+  DRAFT
+  UNPUBLISHED
+}
+
 model User {
   id       String @id @default(uuid())
   email    String @unique
@@ -26,33 +32,34 @@ model User {
 }
 
 model RefreshToken {
-  id        String   @id @default(uuid())
-  tokenHash String   @unique
-  familyId String
-  isRevoked Boolean @default(false)
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  graceExpiresAt DateTime?
+  id                  String    @id @default(uuid())
+  tokenHash           String    @unique
+  familyId            String
+  isRevoked           Boolean   @default(false)
+  userId              String
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  graceExpiresAt      DateTime?
   replacedByTokenHash String?
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  expiresAt           DateTime
+  createdAt           DateTime  @default(now())
 
   @@index([userId])
   @@index([familyId])
 }
 
-
 model Post {
-  id String @id @default(uuid())
-  title String
-  subtitle String?
-  slug String @unique
-  content String
-  published Boolean @default(false)
-  authorId String
-  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  id        String   @id @default(uuid())
+  title     String
+  subtitle  String?
+  slug      String   @unique
+  content   String
+  published Boolean  @default(false)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  status PostStatus @default(DRAFT)
 
   @@index([slug])
 }
