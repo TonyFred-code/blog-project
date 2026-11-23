@@ -2,20 +2,51 @@ import {
   POST_ERROR_CODES,
   PRISMA_ERROR_CODES,
 } from "../constants/errorCodes.js";
-import { Prisma } from "../generated/prisma/index.js";
+import { PostStatus, Prisma } from "../generated/prisma/index.js";
 import { AppError } from "../lib/errorUtils.js";
 import prisma from "./prisma.js";
+
+async function updatePostStatus(slug, nextStatus) {
+  try {
+    const post = await prisma.post.update({
+      where: {
+        slug,
+      },
+      data: {
+        status: nextStatus,
+      },
+      select: {
+        status: true,
+      },
+    });
+
+    return post;
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError ||
+      error instanceof Prisma.PrismaClientValidationError
+    )
+      throw error;
+
+    console.error(error);
+    throw new AppError(
+      "Failed to transition post status",
+      500,
+      POST_ERROR_CODES.POST_STATUS_TRANSITION_FAILED
+    );
+  }
+}
 
 async function getPosts(limit, cursor) {
   try {
     const posts = await prisma.post.findMany({
       where: {
-        published: true,
+        status: PostStatus.PUBLISHED,
       },
       take: limit + 1,
       skip: cursor ? 1 : 0,
       cursor: cursor ? { slug: cursor } : undefined,
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       select: {
         id: true,
         title: true,
@@ -44,7 +75,14 @@ async function getPosts(limit, cursor) {
   }
 }
 
-async function createPost(content, authorId, title, subtitle, slug) {
+async function createPost(
+  content,
+  authorId,
+  title,
+  subtitle,
+  slug,
+  status = PostStatus.PUBLISHED
+) {
   try {
     const post = await prisma.post.create({
       data: {
@@ -53,12 +91,18 @@ async function createPost(content, authorId, title, subtitle, slug) {
         title,
         subtitle,
         slug,
-        published: true,
+        status,
       },
     });
 
     return post;
   } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError ||
+      error instanceof Prisma.PrismaClientValidationError
+    )
+      throw error;
+
     console.error(error);
     const err = new AppError(
       "Failed to create post",
@@ -70,7 +114,14 @@ async function createPost(content, authorId, title, subtitle, slug) {
   }
 }
 
-async function updatePost(content, authorId, title, subtitle, slug) {
+async function updatePost(
+  content,
+  authorId,
+  title,
+  subtitle,
+  slug,
+  status = PostStatus.PUBLISHED
+) {
   try {
     const updatedPost = await prisma.post.update({
       where: { slug, authorId },
@@ -78,12 +129,17 @@ async function updatePost(content, authorId, title, subtitle, slug) {
         content,
         title,
         subtitle,
+        status,
       },
     });
 
     return updatedPost;
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError) throw error;
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError ||
+      error instanceof Prisma.PrismaClientValidationError
+    )
+      throw error;
 
     console.error(error);
     throw new AppError(
@@ -101,7 +157,11 @@ async function getPostBySlug(slug, authorId) {
     },
   });
 
-  if (!post || (!post.published && (!authorId || post.authorId !== authorId))) {
+  if (
+    !post ||
+    (post.status !== PostStatus.PUBLISHED &&
+      (!authorId || post.authorId !== authorId))
+  ) {
     throw new AppError("Post not found", 404, POST_ERROR_CODES.POST_NOT_FOUND);
   }
 
@@ -133,4 +193,11 @@ async function deletePost(slug) {
   }
 }
 
-export { createPost, getPostBySlug, getPosts, updatePost, deletePost };
+export {
+  createPost,
+  getPostBySlug,
+  getPosts,
+  updatePost,
+  deletePost,
+  updatePostStatus,
+};

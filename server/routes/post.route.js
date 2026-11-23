@@ -6,8 +6,12 @@ import {
   updatePost,
   viewPost,
   deletePost,
+  updatePostStatus,
 } from "../controller/post.controller.js";
-import { postValidationRules } from "../validator/post.validator.js";
+import {
+  postStatusValidationRules,
+  postValidationRules,
+} from "../validator/post.validator.js";
 import { handleValidationError } from "../validator/validationHandler.js";
 import { jwtStrategyAuth, optionalJwtAuth } from "../middleware/authGuards.js";
 import { postOwnershipGuard } from "../middleware/postGuards.js";
@@ -20,6 +24,14 @@ postRouter.get(
   jwtStrategyAuth,
   postOwnershipGuard,
   getOwnPost
+);
+postRouter.patch(
+  "/:slug/status",
+  jwtStrategyAuth,
+  postStatusValidationRules,
+  handleValidationError,
+  postOwnershipGuard,
+  updatePostStatus
 );
 postRouter.get("/:slug/edit", jwtStrategyAuth, postOwnershipGuard, getOwnPost);
 postRouter.patch(

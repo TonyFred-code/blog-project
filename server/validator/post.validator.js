@@ -3,7 +3,7 @@ import {
   MAX_SUBTITLE_CHARS_COUNT,
   MAX_TITLE_CHARS_COUNT,
 } from "../constants/postConstants.js";
-import { getPlainTextLength } from "../lib/postUtils.js";
+import { getPlainTextLength, isValidPostStatus } from "../lib/postUtils.js";
 import { body } from "./validator.js";
 
 const postValidationRules = [
@@ -39,6 +39,23 @@ const postValidationRules = [
 
       return true;
     }),
+  body("status")
+    .optional({ values: "falsy" })
+    .trim()
+    .toUpperCase()
+    .custom(isValidPostStatus)
+    .withMessage(`Status field has an invalid status value`),
 ];
 
-export { postValidationRules };
+const postStatusValidationRules = [
+  body("status")
+    .trim()
+    .notEmpty()
+    .withMessage("Status field cannot be empty")
+    .bail()
+    .toUpperCase()
+    .custom(isValidPostStatus)
+    .withMessage(`Status field has an invalid status value`),
+];
+
+export { postValidationRules, postStatusValidationRules };
