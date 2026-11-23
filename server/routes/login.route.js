@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
+  handleTokenRevocation,
   localStrategyAuth,
-  restrictIfAuthenticated,
 } from "../middleware/authGuards.js";
 import { loginPost } from "../controller/login.controller.js";
 import { loginValidationRules } from "../validator/login.validator.js";
@@ -13,7 +13,7 @@ loginRouter.post(
   "/",
   loginValidationRules,
   handleValidationError,
-  restrictIfAuthenticated,
+  handleTokenRevocation,
   localStrategyAuth,
   loginPost
 );

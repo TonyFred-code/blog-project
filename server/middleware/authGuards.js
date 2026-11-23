@@ -1,21 +1,29 @@
 import passport from "passport";
+import { hashToken } from "../lib/tokenUtils.js";
+import {
+  getRefreshTokenByTokenHash,
+  revokeTokenFamily,
+} from "../db/refreshToken.js";
+import { COOKIE_KEYS } from "../constants/cookies.js";
 
-function restrictIfAuthenticated(req, res, next) {
-  passport.authenticate("jwt", { session: false }, (err, user) => {
-    if (err) {
-      return res.status(500).json({
-        message: "Internal server error. Please try again later.",
-      });
+async function handleTokenRevocation(req, res, next) {
+  const oldRefreshToken = req.cookies?.[COOKIE_KEYS.REFRESH_TOKEN];
+
+  if (oldRefreshToken) {
+    try {
+      const oldToken = await getRefreshTokenByTokenHash(
+        hashToken(oldRefreshToken)
+      );
+
+      if (oldToken) {
+        await revokeTokenFamily(oldToken.familyId);
+      }
+    } catch (_) {
+      // Ignore error and continue.
     }
+  }
 
-    if (user) {
-      return res.status(409).json({
-        message: "You are already authenticated",
-      });
-    }
-
-    return next();
-  })(req, res, next);
+  next();
 }
 
 function jwtStrategyAuth(req, res, next) {
@@ -56,4 +64,4 @@ function localStrategyAuth(req, res, next) {
   })(req, res, next);
 }
 
-export { restrictIfAuthenticated, jwtStrategyAuth, localStrategyAuth };
+export { jwtStrategyAuth, localStrategyAuth, handleTokenRevocation };
