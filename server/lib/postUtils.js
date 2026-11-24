@@ -50,6 +50,8 @@ function isValidPostStatus(status) {
 }
 
 function isValidPostStatusTransition(status, nextStatus) {
+  if (status === nextStatus) return isValidPostStatus(nextStatus);
+
   const VALID_TRANSITIONS = {
     [PostStatus.DRAFT]: [PostStatus.PUBLISHED],
     [PostStatus.PUBLISHED]: [PostStatus.UNPUBLISHED, PostStatus.DRAFT],
