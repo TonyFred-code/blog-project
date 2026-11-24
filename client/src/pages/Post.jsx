@@ -8,6 +8,7 @@ import useAuth from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { useLoaderData } from "react-router-dom";
 import { toast } from "sonner";
+import DraftBanner from "@/components/DraftBanner";
 
 export default function Post() {
   const { user } = useAuth();
@@ -33,7 +34,8 @@ export default function Post() {
   return (
     <div className="flex flex-col relative flex-1">
       <Header />
-      <div className="flex justify-between py-4 mt-3 w-full max-w-lg mx-auto">
+      {isAuthor && <DraftBanner status={post.status} dismissible={false} />}
+      <div className="flex justify-between p-4 mt-3 w-full max-w-lg mx-auto">
         <div className="flex gap-3 items-center">
           <Avatar>
             {/*todo: seed using author email/pen name

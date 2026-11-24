@@ -1,4 +1,4 @@
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { lazy, Suspense, useRef, useState } from "react";
 import { Form, useActionData, useNavigation } from "react-router-dom";
 import ButtonLink from "@/components/LinkButton";
@@ -11,6 +11,7 @@ import {
   MAX_POST_CHARS_COUNT,
   MAX_SUBTITLE_CHARS_COUNT,
   MAX_TITLE_CHARS_COUNT,
+  POST_STATUS,
 } from "@/constants/postConstants";
 import { getPlainTextLength, getWordCount } from "@/lib/textUtils";
 import PostView from "@/components/PostView";
@@ -19,6 +20,7 @@ import {
   validateSubtitle,
   validateTitle,
 } from "@/lib/postHelper";
+import { Spinner } from "@/components/ui/spinner";
 
 const Editor = lazy(() => import("@/components/Editor"));
 
@@ -31,6 +33,8 @@ const FORM_STAGES = {
 export default function CreatePost() {
   const actionData = useActionData();
   const navigation = useNavigation();
+
+  const [createType, setCreateType] = useState(POST_STATUS.PUBLISHED);
   const [value, setValue] = useState("");
   const [stats, setStats] = useState(() => ({
     words: getWordCount(""),
@@ -53,6 +57,9 @@ export default function CreatePost() {
     subtitle: [],
     content: [],
   });
+
+  const postFormRef = useRef(null);
+  const statusInputRef = useRef(null);
   const subtitleRef = useRef(null);
   const addContentBtnRef = useRef(null);
 
@@ -71,25 +78,29 @@ export default function CreatePost() {
     }
 
     const fieldErrors = Array.isArray(actionData.error) ? actionData.error : [];
+    const inputNames = ["title", "subtitle", "content"];
+    const otherErrors = fieldErrors.filter(
+      (e) => !inputNames.includes(e.field)
+    );
 
     return {
       title: fieldErrors.filter((e) => e.field === "title"),
       subtitle: fieldErrors.filter((e) => e.field === "subtitle"),
       content: fieldErrors.filter((e) => e.field === "content"),
-      general: fieldErrors.length === 0 ? actionData.message : null,
+      general:
+        otherErrors.length > 0
+          ? otherErrors.map((e) => e.message).join(". ")
+          : actionData.message || null,
     };
   })();
 
   const calcFormStage = (() => {
-    if (
-      serverErrors.title.length > 0 ||
-      serverErrors.subtitle.length > 0 ||
-      serverErrors.general
-    )
+    if (serverErrors.title.length > 0 || serverErrors.subtitle.length > 0)
       return FORM_STAGES.TITLE;
 
     if (serverErrors.content.length > 0) return FORM_STAGES.CONTENT;
 
+    if (serverErrors.general) return FORM_STAGES.PREVIEW;
     return null;
   })();
 
@@ -197,6 +208,12 @@ export default function CreatePost() {
     }
   }
 
+  function createAsDraft() {
+    statusInputRef.current.value = POST_STATUS.DRAFT;
+    setCreateType(POST_STATUS.DRAFT);
+    postFormRef.current.requestSubmit();
+  }
+
   return (
     <>
       <title>Create post</title>
@@ -247,24 +264,40 @@ export default function CreatePost() {
               </div>
             )}
             {finalFormStage === FORM_STAGES.PREVIEW && (
-              <div className="flex items-center justify-between">
+              <div className="flex sm:items-center justify-between flex-col sm:flex-row gap-3">
                 <Button onClick={() => changeFormStage(FORM_STAGES.CONTENT)}>
                   Edit content
                 </Button>
-                <Button
-                  type="submit"
-                  form="post-form"
-                  disabled={isBusy || isOverLimit}
-                >
-                  {isBusy ? (
-                    <>
-                      <Loader2 className="animate-spin" />
-                      Publishing...
-                    </>
-                  ) : (
-                    "Publish"
-                  )}
-                </Button>
+                <div className="flex sm:items-center gap-2 *:flex-1 sm:*:flex-none">
+                  <Button
+                    onClick={createAsDraft}
+                    disabled={isBusy}
+                    variant="secondary"
+                  >
+                    {isBusy && createType === POST_STATUS.DRAFT ? (
+                      <>
+                        <Spinner />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save as draft"
+                    )}
+                  </Button>
+                  <Button
+                    type="submit"
+                    form="post-form"
+                    disabled={isBusy || isOverLimit}
+                  >
+                    {isBusy && createType === POST_STATUS.PUBLISHED ? (
+                      <>
+                        <Spinner />
+                        Publishing...
+                      </>
+                    ) : (
+                      "Publish"
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </header>
@@ -274,7 +307,8 @@ export default function CreatePost() {
             action="/new"
             noValidate
             onSubmit={handleFormSubmit}
-            className="flex-1 flex flex-col py-4 gap-3"
+            className="flex-1 flex flex-col py-4 gap-3 max-w-3xl w-full mx-auto"
+            ref={postFormRef}
           >
             {errors.general && (
               <div className="flex items-center gap-2 rounded-lg bg-destructive/15 p-3 text-sm font-medium text-destructive border border-destructive/20">
@@ -421,6 +455,12 @@ export default function CreatePost() {
                 <input type="hidden" name="content" value={value} />
                 <input type="hidden" name="title" value={title} />
                 <input type="hidden" name="subtitle" value={subtitle} />
+                <input
+                  type="hidden"
+                  name="status"
+                  ref={statusInputRef}
+                  value={POST_STATUS.PUBLISHED}
+                />
               </>
             )}
           </Form>

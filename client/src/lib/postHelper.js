@@ -47,13 +47,14 @@ function validateContent(value, stats) {
   return [];
 }
 
-async function handleCreateNewPost({ content, title, subtitle }) {
+async function handleCreateNewPost({ content, title, subtitle, status }) {
   try {
     const response = await withMinDelay(
       api.post("/posts", {
         content,
         title,
         subtitle,
+        status,
       }),
       150
     );
@@ -117,13 +118,14 @@ async function editPostLoader({ params }) {
   }
 }
 
-async function handleEditPost({ content, title, subtitle, slug }) {
+async function handleEditPost({ content, title, subtitle, slug, status }) {
   try {
     const response = await withMinDelay(
       api.patch(`/posts/${slug}`, {
         content,
         title,
         subtitle,
+        status,
       }),
       150
     );
@@ -214,10 +216,30 @@ async function handleDeleteAction({ params }) {
   }
 }
 
+async function handlePatchAction(slug, status) {
+  try {
+    const response = await withMinDelay(
+      api.patch(`/posts/${slug}/status`, {
+        status,
+      }),
+      150
+    );
+
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    return normalizeApiError(error);
+  }
+}
+
 async function managePostAction({ params, request }) {
   switch (request.method) {
     case "DELETE":
       return await handleDeleteAction({ params });
+    case "PATCH": {
+      const { status } = Object.fromEntries(await request.formData());
+      return await handlePatchAction(params.slug, status);
+    }
     default:
       sessionStorage.setItem(
         "flash_manage_post_error_toast",

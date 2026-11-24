@@ -16,6 +16,7 @@ import {
   MAX_POST_CHARS_COUNT,
   MAX_SUBTITLE_CHARS_COUNT,
   MAX_TITLE_CHARS_COUNT,
+  POST_STATUS,
 } from "@/constants/postConstants";
 import ButtonLink from "@/components/LinkButton";
 import {
@@ -23,7 +24,8 @@ import {
   validateSubtitle,
   validateTitle,
 } from "@/lib/postHelper";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
 
 const Editor = lazy(() => import("@/components/Editor"));
 
@@ -34,6 +36,7 @@ export default function EditPost() {
   const actionData = useActionData();
   const navigation = useNavigation();
 
+  const [updateType, setUpdateType] = useState(POST_STATUS.PUBLISHED);
   const [title, setTitle] = useState(post.title || "");
   const [subtitle, setSubtitle] = useState(post.subtitle || "");
   const [content, setContent] = useState(post.content || "");
@@ -59,6 +62,8 @@ export default function EditPost() {
   });
   const subtitleRef = useRef(null);
   const addContentBtnRef = useRef(null);
+  const postFormRef = useRef(null);
+  const statusInputRef = useRef(null);
 
   const isBusy = navigation.state !== "idle";
   const contentCharsOverLimit = stats.characters > MAX_POST_CHARS_COUNT;
@@ -74,8 +79,9 @@ export default function EditPost() {
     }
 
     const fieldErrors = Array.isArray(actionData.error) ? actionData.error : [];
-    const generalErrors = fieldErrors.filter(
-      (error) => error.field === "general"
+    const inputNames = ["title", "subtitle", "content"];
+    const otherErrors = fieldErrors.filter(
+      (error) => !inputNames.includes(error.field)
     );
 
     return {
@@ -83,22 +89,20 @@ export default function EditPost() {
       subtitle: fieldErrors.filter((error) => error.field === "subtitle"),
       content: fieldErrors.filter((error) => error.field === "content"),
       general:
-        generalErrors.length > 0
-          ? generalErrors[0].message
-          : actionData.message,
+        otherErrors.length > 0
+          ? otherErrors.map((e) => e.message).join(". ")
+          : actionData.message || null,
     };
   })();
 
   const calcFormStage = (() => {
-    if (
-      serverErrors.title.length > 0 ||
-      serverErrors.subtitle.length > 0 ||
-      serverErrors.general
-    ) {
+    if (serverErrors.title.length > 0 || serverErrors.subtitle.length > 0) {
       return FORM_STAGES.TITLE;
     }
 
     if (serverErrors.content.length > 0) return FORM_STAGES.CONTENT;
+
+    if (serverErrors.general) return FORM_STAGES.PREVIEW;
 
     return null;
   })();
@@ -211,6 +215,12 @@ export default function EditPost() {
     }
   }
 
+  function handleSaveAsDraft() {
+    statusInputRef.current.value = POST_STATUS.DRAFT;
+    setUpdateType(POST_STATUS.DRAFT);
+    postFormRef.current.requestSubmit();
+  }
+
   return (
     <>
       <title>Edit Post | Blog App</title>
@@ -260,20 +270,36 @@ export default function EditPost() {
               </div>
             )}
             {finalFormStage === FORM_STAGES.PREVIEW && (
-              <div className="flex items-center justify-between">
+              <div className="flex sm:items-center sm:justify-between flex-col sm:flex-row gap-3 ">
                 <Button onClick={() => changeFormStage(FORM_STAGES.CONTENT)}>
                   Edit content
                 </Button>
-                <Button type="submit" form="post-form" disabled={isBusy}>
-                  {isBusy ? (
-                    <>
-                      <Loader2 className="animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    "Update"
-                  )}
-                </Button>
+                <div className="flex sm:items-center *:flex-1 sm:*:flex-none gap-2">
+                  <Button
+                    variant="secondary"
+                    onClick={handleSaveAsDraft}
+                    disabled={isBusy}
+                  >
+                    {isBusy && updateType === POST_STATUS.DRAFT ? (
+                      <>
+                        <Spinner />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save as draft"
+                    )}
+                  </Button>
+                  <Button type="submit" form="post-form" disabled={isBusy}>
+                    {isBusy && updateType === POST_STATUS.PUBLISHED ? (
+                      <>
+                        <Spinner />
+                        Updating...
+                      </>
+                    ) : (
+                      "Update"
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </header>
@@ -283,6 +309,7 @@ export default function EditPost() {
             className="flex flex-col flex-1 gap-3 py-4"
             noValidate
             onSubmit={handleFormSubmit}
+            ref={postFormRef}
           >
             {errors.general && (
               <div className="flex items-center gap-2 rounded-lg bg-destructive/15 p-3 text-sm font-medium text-destructive border border-destructive">
@@ -427,6 +454,12 @@ export default function EditPost() {
                 <input type="hidden" name="title" value={title} />
                 <input type="hidden" name="subtitle" value={subtitle} />
                 <input type="hidden" name="content" value={content} />
+                <input
+                  type="hidden"
+                  name="status"
+                  ref={statusInputRef}
+                  value={POST_STATUS.PUBLISHED}
+                />
               </div>
             )}
           </Form>

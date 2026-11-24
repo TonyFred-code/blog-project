@@ -34,6 +34,9 @@ import { Input } from "@/components/ui/input";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Spinner } from "@/components/ui/spinner";
+import { POST_STATUS } from "@/constants/postConstants";
+import DraftBanner from "@/components/DraftBanner";
+import { cn } from "@/lib/utils";
 
 export default function ManagePost() {
   const navigation = useNavigation();
@@ -42,9 +45,9 @@ export default function ManagePost() {
   const { data: post } = useLoaderData();
   const actionData = useActionData();
 
-  const optimisticPublished = fetcher.formData
-    ? fetcher.formData.get("published") === "true"
-    : post.published;
+  const isPostPublished = post.status === POST_STATUS.PUBLISHED;
+  const isPostUnpublished = post.status === POST_STATUS.UNPUBLISHED;
+  const isPostDraft = post.status === POST_STATUS.DRAFT;
 
   const CONFIRMATION_TEXT = `sudo rm post ${post.slug.split("-").at(-1)}`;
   const delPostIsConfirmed = delPostText === CONFIRMATION_TEXT;
@@ -78,10 +81,37 @@ export default function ManagePost() {
     }
   }, [actionData]);
 
+  useEffect(() => {
+    if (fetcher.state === "idle" && fetcher.data) {
+      if (fetcher.data.success) {
+        const nextStatus =
+          fetcher.data.data?.status?.toLowerCase() ||
+          (isPostPublished
+            ? "published"
+            : isPostUnpublished
+              ? "unpublished"
+              : "a draft");
+
+        toast.success("Post updated", {
+          description: `Your post status has been updated. It is now ${nextStatus}.`,
+          id: "post_update",
+        });
+        fetcher.reset();
+      } else {
+        toast.error("Operation failed", {
+          description:
+            fetcher.data.message || "Failed to perform post status update",
+          id: "post_update",
+        });
+      }
+    }
+  }, [fetcher.state, fetcher.data, isPostPublished, isPostUnpublished]);
+
   return (
     <div className="flex flex-col relative gap-4 flex-1">
       <Header />
       <main className="flex-1 max-w-3xl mx-auto p-3 w-full flex flex-col gap-4">
+        <DraftBanner status={post.status} variant="card" />
         <header className="flex justify-between">
           <h1 className="text-2xl leading-tight font-bold">Manage Post</h1>
           <ButtonLink
@@ -132,6 +162,25 @@ export default function ManagePost() {
                 </dl>
                 <Separator />
                 <div className="w-full max-w-sm space-y-2 my-3">
+                  <dl className="flex items-center justify-between">
+                    <dt>Status:</dt>
+                    <dd>
+                      <span
+                        className={cn(
+                          "inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold uppercase tracking-wider",
+                          isPostPublished &&
+                            "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
+                          isPostDraft &&
+                            "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
+                          isPostUnpublished &&
+                            "bg-muted text-muted-foreground border"
+                        )}
+                      >
+                        {post.status}
+                      </span>
+                    </dd>
+                  </dl>
+                  <Separator />
                   <dl className="flex items-center justify-between">
                     <dt>Created at:</dt>
                     <dd className="text-muted-foreground">
@@ -197,13 +246,74 @@ export default function ManagePost() {
                 <section className="space-y-3 p-3">
                   <div>
                     <h3 className="font-medium text-xl">
-                      {optimisticPublished ? "Unpublish post" : "Publish post"}
+                      {isPostPublished
+                        ? "Unpublish post"
+                        : isPostDraft
+                          ? "Publish draft"
+                          : "Publish post"}
                     </h3>
-                    <p className="text-secondary-foreground">
-                      Configure publish status of your post
+                    <p className="text-secondary-foreground text-sm">
+                      {isPostPublished
+                        ? "Unpublishing will hide this post from public feeds and readers while preserving its content and URL."
+                        : isPostDraft
+                          ? "This post is currently a draft. Publishing will make it publicly accessible to all readers."
+                          : "This post is currently unpublished. Re-publishing will make it publicly visible again."}
                     </p>
                   </div>
-                  <UnderConstruction />
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    <fetcher.Form
+                      method="patch"
+                      action={`/post/${post.slug}/manage`}
+                    >
+                      <input
+                        type="hidden"
+                        name="status"
+                        value={
+                          isPostPublished
+                            ? POST_STATUS.UNPUBLISHED
+                            : POST_STATUS.PUBLISHED
+                        }
+                      />
+                      <Button
+                        type="submit"
+                        variant={isPostPublished ? "outline" : "default"}
+                      >
+                        {fetcher.state !== "idle" ? (
+                          <>
+                            <Spinner />
+                            <span>Updating...</span>
+                          </>
+                        ) : isPostPublished ? (
+                          "Unpublish post"
+                        ) : isPostDraft ? (
+                          "Publish draft"
+                        ) : (
+                          "Publish post"
+                        )}
+                      </Button>
+                    </fetcher.Form>
+
+                    {isPostUnpublished && (
+                      <fetcher.Form
+                        method="patch"
+                        action={`/post/${post.slug}/manage`}
+                      >
+                        <input
+                          type="hidden"
+                          name="status"
+                          value={POST_STATUS.DRAFT}
+                        />
+                        <Button
+                          type="submit"
+                          variant="secondary"
+                          disabled={fetcher.state !== "idle"}
+                        >
+                          Revert to draft
+                        </Button>
+                      </fetcher.Form>
+                    )}
+                  </div>
                 </section>
                 <Separator />
                 <section className="space-y-3 p-3">
