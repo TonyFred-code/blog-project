@@ -188,7 +188,7 @@ async function createPost(req, res) {
   const { content, title, subtitle, status } = req.body;
   const slug = generateHashedSlug(title);
 
-  if (status !== PostStatus.DRAFT || status !== PostStatus.PUBLISHED) {
+  if (status !== PostStatus.DRAFT && status !== PostStatus.PUBLISHED) {
     return res.status(400).json({
       success: false,
       message: "Invalid post creation status",
