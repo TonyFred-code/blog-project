@@ -3,8 +3,14 @@ import axios from "axios";
 let inMemoryToken = null;
 let onSessionExpired = null;
 let refreshPromise = null;
+let authInitialized = false;
+let authInitPromise = null;
+
+const NO_REFRESH_PATHS = ["/login", "/logout", "/register", "/token-refresh"];
+const NO_AUTH_PATHS = ["/login", "/register", "/token-refresh"];
 
 function setAccessToken(token) {
+  authInitialized = true;
   inMemoryToken = token;
 }
 
@@ -25,9 +31,37 @@ const api = axios.create({
   },
 });
 
+function ensureAuthInitialized() {
+  if (authInitialized || inMemoryToken) {
+    return Promise.resolve(inMemoryToken);
+  }
+
+  if (!authInitPromise) {
+    authInitPromise = refreshAccessToken()
+      .then((data) => {
+        return data?.token || null;
+      })
+      .catch(() => {
+        return null;
+      })
+      .finally(() => {
+        authInitPromise = null;
+        authInitialized = true;
+      });
+  }
+
+  return authInitPromise;
+}
+
 // Inject Access Token into all outgoing requests
-api.interceptors.request.use((config) => {
-  if (inMemoryToken) {
+api.interceptors.request.use(async (config) => {
+  const path = config.url ? config.url.split("?")[0] : "";
+
+  if (!NO_AUTH_PATHS.includes(path)) {
+    await ensureAuthInitialized();
+  }
+
+  if (inMemoryToken && !NO_AUTH_PATHS.includes(path)) {
     config.headers.Authorization = `Bearer ${inMemoryToken}`;
   }
 
@@ -49,8 +83,6 @@ function refreshAccessToken() {
 
   return refreshPromise;
 }
-
-const NO_REFRESH_PATHS = ["/login", "/logout", "/register", "/token-refresh"];
 
 function shouldSkipRefresh(url = "") {
   return NO_REFRESH_PATHS.includes(url.split("?")[0]);
