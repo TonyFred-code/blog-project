@@ -1,31 +1,31 @@
 {
-	"folders": [
-		{
-			"name": "Client",
-			"path": "client",
-		},
-		{
-			"name": "Server",
-			"path": "server",
-		},
-		{
-			"name": "Root",
-			"path": ".",
-		},
-	],
-	"settings": {
-		"files.associations": {
-			"*.tsx.ejs": "tsx-ejs",
-			"*.ts.ejs": "ts-ejs",
-			"*.js.ejs": "js-ejs",
-			"*.json.ejs": "json-ejs",
-			"*.css.ejs": "css-ejs",
-			"*.ejs": "html",
-			"*.css": "css",
-			"plyconfig.json": "jsonc",
-		},
-		"js/ts.updateImportsOnPaste.enabled": true,
-		"js/ts.suggest.paths": true,
-		"postman.settings.dotenv-detection-notification-visibility": false,
-	},
+  "folders": [
+    {
+      "name": "Client",
+      "path": "client",
+    },
+    {
+      "name": "Server",
+      "path": "server",
+    },
+    {
+      "name": "Root",
+      "path": ".",
+    },
+  ],
+  "settings": {
+    "files.associations": {
+      "*.tsx.ejs": "tsx-ejs",
+      "*.ts.ejs": "ts-ejs",
+      "*.js.ejs": "js-ejs",
+      "*.json.ejs": "json-ejs",
+      "*.css.ejs": "css-ejs",
+      "*.ejs": "html",
+      "*.css": "css",
+      "plyconfig.json": "jsonc",
+    },
+    "js/ts.updateImportsOnPaste.enabled": true,
+    "js/ts.suggest.paths": true,
+    "postman.settings.dotenv-detection-notification-visibility": false,
+  },
 }

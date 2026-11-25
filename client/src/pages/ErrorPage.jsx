@@ -54,9 +54,11 @@ export default function ErrorPage() {
   const Icon = view.icon;
 
   useEffect(() => {
-    setTimeout(() => {
+    const timerId = setTimeout(() => {
       nProgress.done();
     }, 150);
+
+    return () => clearTimeout(timerId);
   }, []);
 
   return (

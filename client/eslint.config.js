@@ -6,7 +6,13 @@ import eslintReact from "@eslint-react/eslint-plugin";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
-  globalIgnores(["dist", ".vite"]),
+  globalIgnores([
+    "dist",
+    ".vite",
+    "node_modules",
+    "src/components/ui/**",
+    "src/components/editor/**",
+  ]),
 
   js.configs.recommended,
 
@@ -30,8 +36,8 @@ export default defineConfig([
       "no-unused-vars": [
         "error",
         {
-          varsIgnorePattern: "^[A-Z_]",
-          argsIgnorePattern: "^_",
+          varsIgnorePattern: "_",
+          argsIgnorePattern: "_",
         },
       ],
       "react-refresh/only-export-components": [
@@ -40,13 +46,6 @@ export default defineConfig([
           allowConstantExport: true,
         },
       ],
-    },
-  },
-
-  {
-    files: ["src/components/ui/**/*.{js,jsx}"],
-    rules: {
-      "react-refresh/only-export-components": "off",
     },
   },
 ]);

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import useAuth from "@/hooks/useAuth";
-import { Loader, AlertCircle, EyeOff, Eye, CheckCircle2 } from "lucide-react";
+import { Loader, AlertCircle, EyeOff, Eye } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Form,

@@ -225,7 +225,6 @@ async function handlePatchAction(slug, status) {
       150
     );
 
-    console.log(response.data);
     return response.data;
   } catch (error) {
     return normalizeApiError(error);

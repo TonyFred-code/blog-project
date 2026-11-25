@@ -24,20 +24,9 @@ import {
   validateSubtitle,
   validateTitle,
 } from "@/lib/postHelper";
-import { AlertCircle, TriangleAlertIcon } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import useUnsavedChangesWarning from "@/hooks/useUnsavedChangesWarning";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogMedia,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Card } from "@/components/ui/card";
 import UnsavedChangesDialog from "@/components/UnsavedChangesDialog";
 
 const Editor = lazy(() => import("@/components/Editor"));

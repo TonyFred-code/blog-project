@@ -105,7 +105,7 @@ export default function ManagePost() {
         });
       }
     }
-  }, [fetcher.state, fetcher.data, isPostPublished, isPostUnpublished]);
+  }, [fetcher, isPostPublished, isPostUnpublished]);
 
   return (
     <div className="flex flex-col relative gap-4 flex-1">
