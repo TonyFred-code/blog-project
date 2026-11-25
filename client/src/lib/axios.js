@@ -1,25 +1,32 @@
 import axios from "axios";
 
 let inMemoryToken = null;
+let sessionUser = null;
+let isSessionRestored = false;
+let sessionRestorePromise = null;
 let onSessionExpired = null;
 let refreshPromise = null;
-let authInitialized = false;
-let authInitPromise = null;
 
 const NO_REFRESH_PATHS = ["/login", "/logout", "/register", "/token-refresh"];
-const NO_AUTH_PATHS = ["/login", "/register", "/token-refresh"];
 
-function setAccessToken(token) {
-  authInitialized = true;
-  inMemoryToken = token;
-}
-
-function getAccessToken() {
-  return inMemoryToken;
+function shouldSkipRefresh(url = "") {
+  return NO_REFRESH_PATHS.includes(url.split("?")[0]);
 }
 
 function setSessionExpiredHandler(handler) {
   onSessionExpired = handler;
+}
+
+function setAuthSession(user, token) {
+  sessionUser = user;
+  inMemoryToken = token;
+  isSessionRestored = true;
+}
+
+function clearAuthSession() {
+  sessionUser = null;
+  inMemoryToken = null;
+  isSessionRestored = false;
 }
 
 const api = axios.create({
@@ -31,37 +38,44 @@ const api = axios.create({
   },
 });
 
-function ensureAuthInitialized() {
-  if (authInitialized || inMemoryToken) {
-    return Promise.resolve(inMemoryToken);
+function restoreSession() {
+  if (isSessionRestored) {
+    return Promise.resolve({ user: sessionUser, token: inMemoryToken });
   }
 
-  if (!authInitPromise) {
-    authInitPromise = refreshAccessToken()
-      .then((data) => {
-        return data?.token || null;
-      })
-      .catch(() => {
-        return null;
-      })
-      .finally(() => {
-        authInitPromise = null;
-        authInitialized = true;
-      });
-  }
+  if (sessionRestorePromise) return sessionRestorePromise;
 
-  return authInitPromise;
+  sessionRestorePromise = api
+    .post("/token-refresh")
+    .then((response) => {
+      inMemoryToken = response.data.token;
+      sessionUser = response.data.user;
+
+      return { user: sessionUser, token: inMemoryToken };
+    })
+    .catch(() => {
+      inMemoryToken = null;
+      sessionUser = null;
+
+      return { user: null, token: null };
+    })
+    .finally(() => {
+      sessionRestorePromise = null;
+      isSessionRestored = true;
+    });
+
+  return sessionRestorePromise;
 }
 
 // Inject Access Token into all outgoing requests
 api.interceptors.request.use(async (config) => {
   const path = config.url ? config.url.split("?")[0] : "";
 
-  if (!NO_AUTH_PATHS.includes(path)) {
-    await ensureAuthInitialized();
+  if (!shouldSkipRefresh(path)) {
+    await restoreSession();
   }
 
-  if (inMemoryToken && !NO_AUTH_PATHS.includes(path)) {
+  if (inMemoryToken && !shouldSkipRefresh(path)) {
     config.headers.Authorization = `Bearer ${inMemoryToken}`;
   }
 
@@ -69,23 +83,21 @@ api.interceptors.request.use(async (config) => {
 });
 
 function refreshAccessToken() {
-  if (!refreshPromise) {
-    refreshPromise = api
-      .post("/token-refresh")
-      .then((response) => {
-        setAccessToken(response.data.token);
-        return response.data;
-      })
-      .finally(() => {
-        refreshPromise = null;
-      });
-  }
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = api
+    .post("/token-refresh")
+    .then((response) => {
+      inMemoryToken = response.data.token;
+      sessionUser = response.data.user;
+
+      return response.data;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
 
   return refreshPromise;
-}
-
-function shouldSkipRefresh(url = "") {
-  return NO_REFRESH_PATHS.includes(url.split("?")[0]);
 }
 
 // Response interceptor to automatically refresh the token
@@ -126,7 +138,7 @@ api.interceptors.response.use(
       return api(originalRequest);
     } catch (refreshError) {
       if (refreshError.response?.status === 401) {
-        setAccessToken(null);
+        clearAuthSession();
         onSessionExpired?.();
       }
 
@@ -137,8 +149,9 @@ api.interceptors.response.use(
 
 export default api;
 export {
-  setAccessToken,
-  getAccessToken,
   refreshAccessToken,
   setSessionExpiredHandler,
+  setAuthSession,
+  clearAuthSession,
+  restoreSession,
 };

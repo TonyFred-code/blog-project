@@ -1,6 +1,7 @@
 import api, {
-  refreshAccessToken,
-  setAccessToken,
+  clearAuthSession,
+  restoreSession,
+  setAuthSession,
   setSessionExpiredHandler,
 } from "@/lib/axios.js";
 import { useCallback, useEffect, useState } from "react";
@@ -19,23 +20,23 @@ function AuthProvider({ children }) {
   useEffect(() => {
     let ignore = false;
 
-    const restoreSession = async () => {
+    const init = async () => {
       try {
-        const data = await refreshAccessToken();
+        const data = await restoreSession();
 
         if (!ignore) setUser(data.user);
       } catch (error) {
         console.error(error);
         if (!ignore) {
           setUser(null);
-          setAccessToken(null);
+          clearAuthSession();
         }
       } finally {
         if (!ignore) setIsLoading(false);
       }
     };
 
-    restoreSession();
+    init();
 
     return () => {
       ignore = true;
@@ -46,22 +47,18 @@ function AuthProvider({ children }) {
     const channel = new BroadcastChannel("auth_channel");
 
     channel.onmessage = async (event) => {
-      if (event.data.type === "AUTH") {
-        const data = await refreshAccessToken().catch(() => null);
-
-        setUser(data?.user || null);
-      }
+      if (event.data.type === "AUTH") setUser(event.data.user);
     };
 
     return () => channel.close();
   }, []);
 
   const login = useCallback((user, token) => {
-    setAccessToken(token);
+    setAuthSession(user, token);
     setUser(user);
     const channel = new BroadcastChannel("auth_channel");
 
-    channel.postMessage({ type: "AUTH" });
+    channel.postMessage({ type: "AUTH", user });
     toast.success("Login successful! Welcome back!");
   }, []);
 
@@ -70,13 +67,13 @@ function AuthProvider({ children }) {
       await api.post("/logout");
       const channel = new BroadcastChannel("auth_channel");
 
-      channel.postMessage({ type: "AUTH" });
+      channel.postMessage({ type: "AUTH", user: null });
       toast.success("User logged out. Come back soon.");
     } catch (error) {
       console.error("Error logging out:", error);
     } finally {
       setUser(null);
-      setAccessToken(null);
+      clearAuthSession();
     }
   }, []);
 
