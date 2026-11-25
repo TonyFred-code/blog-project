@@ -21,6 +21,8 @@ import {
   validateTitle,
 } from "@/lib/postHelper";
 import { Spinner } from "@/components/ui/spinner";
+import useUnsavedChangesWarning from "@/hooks/useUnsavedChangesWarning";
+import UnsavedChangesDialog from "@/components/UnsavedChangesDialog";
 
 const Editor = lazy(() => import("@/components/Editor"));
 
@@ -30,18 +32,24 @@ const FORM_STAGES = {
   PREVIEW: "preview",
 };
 
+const FIELD_DEFAULT_VALUES = {
+  TITLE: "",
+  CONTENT: "",
+  SUBTITLE: "",
+};
+
 export default function CreatePost() {
   const actionData = useActionData();
   const navigation = useNavigation();
 
   const [createType, setCreateType] = useState(POST_STATUS.PUBLISHED);
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState(FIELD_DEFAULT_VALUES.CONTENT);
   const [stats, setStats] = useState(() => ({
-    words: getWordCount(""),
-    characters: getPlainTextLength(""),
+    words: getWordCount(FIELD_DEFAULT_VALUES.CONTENT),
+    characters: getPlainTextLength(FIELD_DEFAULT_VALUES.CONTENT),
   }));
-  const [title, setTitle] = useState("");
-  const [subtitle, setSubtitle] = useState("");
+  const [title, setTitle] = useState(FIELD_DEFAULT_VALUES.TITLE);
+  const [subtitle, setSubtitle] = useState(FIELD_DEFAULT_VALUES.SUBTITLE);
   const [formFieldModified, setFormFieldModified] = useState({
     title: false,
     subtitle: false,
@@ -62,6 +70,17 @@ export default function CreatePost() {
   const statusInputRef = useRef(null);
   const subtitleRef = useRef(null);
   const addContentBtnRef = useRef(null);
+
+  const titleDirty =
+    formFieldModified.title && title !== FIELD_DEFAULT_VALUES.TITLE;
+  const subtitleDirty =
+    formFieldModified.subtitle && subtitle !== FIELD_DEFAULT_VALUES.SUBTITLE;
+  const contentDirty =
+    formFieldModified.content && value !== FIELD_DEFAULT_VALUES.CONTENT;
+
+  const blocker = useUnsavedChangesWarning(
+    titleDirty || subtitleDirty || contentDirty
+  );
 
   const isBusy = navigation.state !== "idle";
 
@@ -466,6 +485,7 @@ export default function CreatePost() {
           </Form>
         </main>
       </div>
+      <UnsavedChangesDialog blocker={blocker} />
     </>
   );
 }

@@ -24,8 +24,21 @@ import {
   validateSubtitle,
   validateTitle,
 } from "@/lib/postHelper";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, TriangleAlertIcon } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
+import useUnsavedChangesWarning from "@/hooks/useUnsavedChangesWarning";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Card } from "@/components/ui/card";
+import UnsavedChangesDialog from "@/components/UnsavedChangesDialog";
 
 const Editor = lazy(() => import("@/components/Editor"));
 
@@ -33,17 +46,22 @@ const FORM_STAGES = { CONTENT: "content", TITLE: "title", PREVIEW: "preview" };
 
 export default function EditPost() {
   const { data: post } = useLoaderData();
+  const FIELD_INITIAL_VALUES = {
+    TITLE: post.title || "",
+    CONTENT: post.content || "",
+    SUBTITLE: post.subtitle || "",
+  };
   const actionData = useActionData();
   const navigation = useNavigation();
 
   const [updateType, setUpdateType] = useState(POST_STATUS.PUBLISHED);
-  const [title, setTitle] = useState(post.title || "");
-  const [subtitle, setSubtitle] = useState(post.subtitle || "");
-  const [content, setContent] = useState(post.content || "");
+  const [title, setTitle] = useState(FIELD_INITIAL_VALUES.TITLE);
+  const [subtitle, setSubtitle] = useState(FIELD_INITIAL_VALUES.SUBTITLE);
+  const [content, setContent] = useState(FIELD_INITIAL_VALUES.CONTENT);
 
   const [stats, setStats] = useState(() => ({
-    words: getWordCount(post.content || ""),
-    characters: getPlainTextLength(post.content || ""),
+    words: getWordCount(FIELD_INITIAL_VALUES.CONTENT),
+    characters: getPlainTextLength(FIELD_INITIAL_VALUES.CONTENT),
   }));
   const [manualOverride, setManualOverride] = useState({
     stage: null,
@@ -64,6 +82,17 @@ export default function EditPost() {
   const addContentBtnRef = useRef(null);
   const postFormRef = useRef(null);
   const statusInputRef = useRef(null);
+
+  const titleDirty =
+    formFieldModified.title && title !== FIELD_INITIAL_VALUES.TITLE;
+  const subtitleDirty =
+    formFieldModified.subtitle && subtitle !== FIELD_INITIAL_VALUES.SUBTITLE;
+  const contentDirty =
+    formFieldModified.content && content !== FIELD_INITIAL_VALUES.CONTENT;
+
+  const blocker = useUnsavedChangesWarning(
+    titleDirty || subtitleDirty || contentDirty
+  );
 
   const isBusy = navigation.state !== "idle";
   const contentCharsOverLimit = stats.characters > MAX_POST_CHARS_COUNT;
@@ -465,6 +494,7 @@ export default function EditPost() {
           </Form>
         </main>
       </div>
+      <UnsavedChangesDialog blocker={blocker} />
     </>
   );
 }
