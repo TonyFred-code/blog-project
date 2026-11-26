@@ -23,6 +23,7 @@ import {
 import { Spinner } from "@/components/ui/spinner";
 import useUnsavedChangesWarning from "@/hooks/useUnsavedChangesWarning";
 import UnsavedChangesDialog from "@/components/UnsavedChangesDialog";
+import PageTitle from "@/components/PageTitle";
 
 const Editor = lazy(() => import("@/components/Editor"));
 
@@ -235,7 +236,7 @@ export default function CreatePost() {
 
   return (
     <>
-      <title>Create post</title>
+      <PageTitle title="Create post" />
       <div className="flex flex-col gap-8 flex-1">
         <header className="shadow-xl py-3 px-4 border-b flex items-center">
           <div>

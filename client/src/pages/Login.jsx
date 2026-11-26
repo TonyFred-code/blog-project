@@ -1,3 +1,4 @@
+import PageTitle from "@/components/PageTitle";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -106,7 +107,7 @@ export default function Login() {
 
   return (
     <>
-      <title>Login | Blog App</title>
+      <PageTitle title={"Login"} />
       <main className="min-h-screen bg-linear-to-br from-background via-primary/10 to-background flex items-center justify-center p-4">
         <div className="w-full max-w-md">
           <div className="bg-background/10 rounded-2xl shadow-2xl p-8 space-y-8">

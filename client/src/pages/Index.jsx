@@ -3,6 +3,7 @@ import { useLoaderData } from "react-router-dom";
 import { useEffect } from "react";
 import { toast } from "sonner";
 import Header from "@/components/Header";
+import PageTitle from "@/components/PageTitle";
 
 export default function Index() {
   const postData = useLoaderData();
@@ -39,6 +40,7 @@ export default function Index() {
 
   return (
     <>
+      <PageTitle title="Feed" />
       <div className="flex flex-col relative flex-1">
         <Header />
         <main className="grid grid-cols-1 my-8 px-3 max-w-5xl flex-1 w-full mx-auto">

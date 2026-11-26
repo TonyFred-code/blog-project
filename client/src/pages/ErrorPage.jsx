@@ -1,5 +1,6 @@
 import Header from "@/components/Header";
 import ButtonLink from "@/components/LinkButton";
+import PageTitle from "@/components/PageTitle";
 import { Button } from "@/components/ui/button";
 import { ServerOff, TriangleAlert } from "lucide-react";
 import nProgress from "nprogress";
@@ -63,7 +64,7 @@ export default function ErrorPage() {
 
   return (
     <>
-      <title>{`${view.documentTitle} | Blog App`}</title>
+      <PageTitle title={view.documentTitle} />
       <div>
         <Header />
         <main className="max-w-md mx-auto py-20 px-4 text-center space-y-4">

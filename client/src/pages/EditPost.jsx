@@ -40,6 +40,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import PageTitle from "@/components/PageTitle";
 
 const Editor = lazy(() => import("@/components/Editor"));
 
@@ -253,7 +254,7 @@ export default function EditPost() {
 
   return (
     <>
-      <title>Edit Post | Blog App</title>
+      <PageTitle title="Edit post" />
       <div className="flex flex-col gap-8 flex-1">
         <header className="flex items-center border-b shadow-xl px-4 py-3">
           <div>
