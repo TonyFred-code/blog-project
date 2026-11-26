@@ -24,10 +24,22 @@ import {
   validateSubtitle,
   validateTitle,
 } from "@/lib/postHelper";
-import { AlertCircle } from "lucide-react";
+import {
+  AlertCircle,
+  ChevronDown,
+  EyeOff,
+  FileText,
+  Globe,
+} from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 import useUnsavedChangesWarning from "@/hooks/useUnsavedChangesWarning";
 import UnsavedChangesDialog from "@/components/UnsavedChangesDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Editor = lazy(() => import("@/components/Editor"));
 
@@ -43,7 +55,7 @@ export default function EditPost() {
   const actionData = useActionData();
   const navigation = useNavigation();
 
-  const [updateType, setUpdateType] = useState(POST_STATUS.PUBLISHED);
+  const [targetStatus, setTargetStatus] = useState(post.status);
   const [title, setTitle] = useState(FIELD_INITIAL_VALUES.TITLE);
   const [subtitle, setSubtitle] = useState(FIELD_INITIAL_VALUES.SUBTITLE);
   const [content, setContent] = useState(FIELD_INITIAL_VALUES.CONTENT);
@@ -233,9 +245,9 @@ export default function EditPost() {
     }
   }
 
-  function handleSaveAsDraft() {
-    statusInputRef.current.value = POST_STATUS.DRAFT;
-    setUpdateType(POST_STATUS.DRAFT);
+  function handleStatusSubmit(nextStatus) {
+    statusInputRef.current.value = nextStatus;
+    setTargetStatus(nextStatus);
     postFormRef.current.requestSubmit();
   }
 
@@ -293,25 +305,73 @@ export default function EditPost() {
                   Edit content
                 </Button>
                 <div className="flex sm:items-center *:flex-1 sm:*:flex-none gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="secondary"
+                          disabled={isBusy}
+                          className="gap-1.5"
+                        />
+                      }
+                    >
+                      <span>Options</span>
+                      <ChevronDown className="size-4" opacity={0.6} />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      {post.status !== POST_STATUS.PUBLISHED && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            handleStatusSubmit(POST_STATUS.PUBLISHED)
+                          }
+                        >
+                          <Globe className="size-4" />
+                          <span>Publish post</span>
+                        </DropdownMenuItem>
+                      )}
+
+                      {post.status === POST_STATUS.PUBLISHED && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            handleStatusSubmit(POST_STATUS.UNPUBLISHED)
+                          }
+                        >
+                          <EyeOff className="size-4" />
+                          <span>Unpublish post</span>
+                        </DropdownMenuItem>
+                      )}
+
+                      {post.status !== POST_STATUS.DRAFT && (
+                        <DropdownMenuItem
+                          onClick={() => handleStatusSubmit(POST_STATUS.DRAFT)}
+                        >
+                          <FileText className="size-4" />
+                          <span>Revert to draft</span>
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
                   <Button
-                    variant="secondary"
-                    onClick={handleSaveAsDraft}
+                    type="submit"
+                    form="post-form"
                     disabled={isBusy}
+                    onClick={() => setTargetStatus(post.status)}
                   >
-                    {isBusy && updateType === POST_STATUS.DRAFT ? (
+                    {isBusy ? (
                       <>
                         <Spinner />
-                        Saving...
-                      </>
-                    ) : (
-                      "Save as draft"
-                    )}
-                  </Button>
-                  <Button type="submit" form="post-form" disabled={isBusy}>
-                    {isBusy && updateType === POST_STATUS.PUBLISHED ? (
-                      <>
-                        <Spinner />
-                        Updating...
+                        <span>
+                          {targetStatus === POST_STATUS.PUBLISHED &&
+                          post.status !== POST_STATUS.PUBLISHED
+                            ? "Publishing..."
+                            : targetStatus === POST_STATUS.UNPUBLISHED
+                              ? "Unpublishing..."
+                              : targetStatus === POST_STATUS.DRAFT &&
+                                  post.status !== POST_STATUS.DRAFT
+                                ? "Reverting..."
+                                : "Updating..."}
+                        </span>
                       </>
                     ) : (
                       "Update"
@@ -476,7 +536,7 @@ export default function EditPost() {
                   type="hidden"
                   name="status"
                   ref={statusInputRef}
-                  value={POST_STATUS.PUBLISHED}
+                  value={post.status}
                 />
               </div>
             )}
