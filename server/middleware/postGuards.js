@@ -9,6 +9,15 @@ async function postOwnershipGuard(req, res, next) {
   try {
     const post = await getPostBySlugDB(slug, userId);
 
+    if (post.authorId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Unauthorized action. User is unable to retrieve post due to insufficient access rights.",
+        errors: [],
+      });
+    }
+
     req.post = post;
     return next();
   } catch (error) {
