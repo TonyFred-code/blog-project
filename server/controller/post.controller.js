@@ -23,6 +23,7 @@ async function updatePostStatus(req, res) {
   const post = req.post;
   const currentStatus = post.status;
   const { status } = req.body;
+  const { id: userId } = req.user;
 
   if (!isValidPostStatusTransition(currentStatus, status)) {
     return res.status(400).json({
@@ -38,7 +39,7 @@ async function updatePostStatus(req, res) {
   }
 
   try {
-    const updatedPost = await updatePostStatusDB(slug, status);
+    const updatedPost = await updatePostStatusDB(slug, userId, status);
 
     return res.status(200).json({
       success: true,
@@ -60,9 +61,10 @@ async function updatePostStatus(req, res) {
 
 async function deletePost(req, res) {
   const { slug } = req.params;
+  const { id: userId } = req.user;
 
   try {
-    await deletePostDB(slug);
+    await deletePostDB(slug, userId);
 
     return res.status(200).json({
       success: true,

@@ -6,11 +6,12 @@ import { PostStatus, Prisma } from "../generated/prisma/index.js";
 import { AppError } from "../lib/errorUtils.js";
 import prisma from "./prisma.js";
 
-async function updatePostStatus(slug, nextStatus) {
+async function updatePostStatus(slug, authorId, nextStatus) {
   try {
     const post = await prisma.post.update({
       where: {
         slug,
+        authorId,
       },
       data: {
         status: nextStatus,
@@ -168,10 +169,10 @@ async function getPostBySlug(slug, authorId) {
   return post;
 }
 
-async function deletePost(slug) {
+async function deletePost(slug, authorId) {
   try {
     await prisma.post.delete({
-      where: { slug },
+      where: { slug, authorId },
     });
 
     return true;
