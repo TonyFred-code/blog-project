@@ -2,6 +2,7 @@ import { remark } from "remark";
 import strip from "strip-markdown";
 import { customAlphabet } from "nanoid";
 import { nolookalikes } from "nanoid-dictionary";
+import { PostStatus } from "../generated/prisma/index.js";
 
 function slugify(text) {
   return text
@@ -39,4 +40,30 @@ function getPlainTextLength(markdown = "") {
   }
 }
 
-export { generateHashedSlug, getPlainTextLength };
+/**
+ *
+ * @param {string} status - Post status to be checked
+ * @returns true if post matches on of PostStatus: DRAFT | PUBLISHED | UNPUBLISHED and false otherwise
+ */
+function isValidPostStatus(status) {
+  return Object.values(PostStatus).includes(status);
+}
+
+function isValidPostStatusTransition(status, nextStatus) {
+  if (status === nextStatus) return isValidPostStatus(nextStatus);
+
+  const VALID_TRANSITIONS = {
+    [PostStatus.DRAFT]: [PostStatus.PUBLISHED],
+    [PostStatus.PUBLISHED]: [PostStatus.UNPUBLISHED, PostStatus.DRAFT],
+    [PostStatus.UNPUBLISHED]: [PostStatus.DRAFT, PostStatus.PUBLISHED],
+  };
+
+  return VALID_TRANSITIONS[status]?.includes(nextStatus) ?? false;
+}
+
+export {
+  generateHashedSlug,
+  getPlainTextLength,
+  isValidPostStatus,
+  isValidPostStatusTransition,
+};

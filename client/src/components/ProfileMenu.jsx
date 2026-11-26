@@ -10,6 +10,7 @@ import {
 import UserAvatar from "@/components/UserAvatar";
 import useAuth from "@/hooks/useAuth";
 import { LogOutIcon, UserIcon } from "lucide-react";
+import ThemeToggle from "./ThemeToggle";
 
 export default function ProfileMenu() {
   const { isAuthenticated, logout, user } = useAuth();
@@ -35,6 +36,14 @@ export default function ProfileMenu() {
           <UserIcon />
           Profile
         </DropdownMenuItem>
+
+        <div className="px-2 py-1.5">
+          <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+            Theme
+          </p>
+          <ThemeToggle />
+        </div>
+
         <DropdownMenuSeparator />
         <DropdownMenuItem variant="destructive" onClick={logout}>
           <LogOutIcon />

@@ -1,4 +1,3 @@
-import { AxiosError } from "axios";
 import api from "./axios";
 import { normalizeApiError } from "./errorHelper.js";
 

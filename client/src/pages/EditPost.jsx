@@ -16,6 +16,7 @@ import {
   MAX_POST_CHARS_COUNT,
   MAX_SUBTITLE_CHARS_COUNT,
   MAX_TITLE_CHARS_COUNT,
+  POST_STATUS,
 } from "@/constants/postConstants";
 import ButtonLink from "@/components/LinkButton";
 import {
@@ -23,7 +24,23 @@ import {
   validateSubtitle,
   validateTitle,
 } from "@/lib/postHelper";
-import { AlertCircle, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  ChevronDown,
+  EyeOff,
+  FileText,
+  Globe,
+} from "lucide-react";
+import { Spinner } from "@/components/ui/spinner";
+import useUnsavedChangesWarning from "@/hooks/useUnsavedChangesWarning";
+import UnsavedChangesDialog from "@/components/UnsavedChangesDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import PageTitle from "@/components/PageTitle";
 
 const Editor = lazy(() => import("@/components/Editor"));
 
@@ -31,16 +48,22 @@ const FORM_STAGES = { CONTENT: "content", TITLE: "title", PREVIEW: "preview" };
 
 export default function EditPost() {
   const { data: post } = useLoaderData();
+  const FIELD_INITIAL_VALUES = {
+    TITLE: post.title || "",
+    CONTENT: post.content || "",
+    SUBTITLE: post.subtitle || "",
+  };
   const actionData = useActionData();
   const navigation = useNavigation();
 
-  const [title, setTitle] = useState(post.title || "");
-  const [subtitle, setSubtitle] = useState(post.subtitle || "");
-  const [content, setContent] = useState(post.content || "");
+  const [targetStatus, setTargetStatus] = useState(post.status);
+  const [title, setTitle] = useState(FIELD_INITIAL_VALUES.TITLE);
+  const [subtitle, setSubtitle] = useState(FIELD_INITIAL_VALUES.SUBTITLE);
+  const [content, setContent] = useState(FIELD_INITIAL_VALUES.CONTENT);
 
   const [stats, setStats] = useState(() => ({
-    words: getWordCount(post.content || ""),
-    characters: getPlainTextLength(post.content || ""),
+    words: getWordCount(FIELD_INITIAL_VALUES.CONTENT),
+    characters: getPlainTextLength(FIELD_INITIAL_VALUES.CONTENT),
   }));
   const [manualOverride, setManualOverride] = useState({
     stage: null,
@@ -59,6 +82,19 @@ export default function EditPost() {
   });
   const subtitleRef = useRef(null);
   const addContentBtnRef = useRef(null);
+  const postFormRef = useRef(null);
+  const statusInputRef = useRef(null);
+
+  const titleDirty =
+    formFieldModified.title && title !== FIELD_INITIAL_VALUES.TITLE;
+  const subtitleDirty =
+    formFieldModified.subtitle && subtitle !== FIELD_INITIAL_VALUES.SUBTITLE;
+  const contentDirty =
+    formFieldModified.content && content !== FIELD_INITIAL_VALUES.CONTENT;
+
+  const blocker = useUnsavedChangesWarning(
+    titleDirty || subtitleDirty || contentDirty
+  );
 
   const isBusy = navigation.state !== "idle";
   const contentCharsOverLimit = stats.characters > MAX_POST_CHARS_COUNT;
@@ -74,8 +110,9 @@ export default function EditPost() {
     }
 
     const fieldErrors = Array.isArray(actionData.error) ? actionData.error : [];
-    const generalErrors = fieldErrors.filter(
-      (error) => error.field === "general"
+    const inputNames = ["title", "subtitle", "content"];
+    const otherErrors = fieldErrors.filter(
+      (error) => !inputNames.includes(error.field)
     );
 
     return {
@@ -83,22 +120,20 @@ export default function EditPost() {
       subtitle: fieldErrors.filter((error) => error.field === "subtitle"),
       content: fieldErrors.filter((error) => error.field === "content"),
       general:
-        generalErrors.length > 0
-          ? generalErrors[0].message
-          : actionData.message,
+        otherErrors.length > 0
+          ? otherErrors.map((e) => e.message).join(". ")
+          : actionData.message || null,
     };
   })();
 
   const calcFormStage = (() => {
-    if (
-      serverErrors.title.length > 0 ||
-      serverErrors.subtitle.length > 0 ||
-      serverErrors.general
-    ) {
+    if (serverErrors.title.length > 0 || serverErrors.subtitle.length > 0) {
       return FORM_STAGES.TITLE;
     }
 
     if (serverErrors.content.length > 0) return FORM_STAGES.CONTENT;
+
+    if (serverErrors.general) return FORM_STAGES.PREVIEW;
 
     return null;
   })();
@@ -211,9 +246,15 @@ export default function EditPost() {
     }
   }
 
+  function handleStatusSubmit(nextStatus) {
+    statusInputRef.current.value = nextStatus;
+    setTargetStatus(nextStatus);
+    postFormRef.current.requestSubmit();
+  }
+
   return (
     <>
-      <title>Edit Post | Blog App</title>
+      <PageTitle title="Edit post" />
       <div className="flex flex-col gap-8 flex-1">
         <header className="flex items-center border-b shadow-xl px-4 py-3">
           <div>
@@ -223,7 +264,7 @@ export default function EditPost() {
               className="flex items-center gap-2 group text-foreground"
             >
               <img
-                src="/weblog-logo.svg"
+                src="/weblog-logo-themed.svg"
                 alt="Blog App logo"
                 className="size-9 transition-transform group-hover:scale-105"
               />
@@ -260,20 +301,84 @@ export default function EditPost() {
               </div>
             )}
             {finalFormStage === FORM_STAGES.PREVIEW && (
-              <div className="flex items-center justify-between">
+              <div className="flex sm:items-center sm:justify-between flex-col sm:flex-row gap-3 ">
                 <Button onClick={() => changeFormStage(FORM_STAGES.CONTENT)}>
                   Edit content
                 </Button>
-                <Button type="submit" form="post-form" disabled={isBusy}>
-                  {isBusy ? (
-                    <>
-                      <Loader2 className="animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    "Update"
-                  )}
-                </Button>
+                <div className="flex sm:items-center *:flex-1 sm:*:flex-none gap-2">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          variant="secondary"
+                          disabled={isBusy}
+                          className="gap-1.5"
+                        />
+                      }
+                    >
+                      <span>Options</span>
+                      <ChevronDown className="size-4" opacity={0.6} />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      {post.status !== POST_STATUS.PUBLISHED && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            handleStatusSubmit(POST_STATUS.PUBLISHED)
+                          }
+                        >
+                          <Globe className="size-4" />
+                          <span>Publish post</span>
+                        </DropdownMenuItem>
+                      )}
+
+                      {post.status === POST_STATUS.PUBLISHED && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            handleStatusSubmit(POST_STATUS.UNPUBLISHED)
+                          }
+                        >
+                          <EyeOff className="size-4" />
+                          <span>Unpublish post</span>
+                        </DropdownMenuItem>
+                      )}
+
+                      {post.status !== POST_STATUS.DRAFT && (
+                        <DropdownMenuItem
+                          onClick={() => handleStatusSubmit(POST_STATUS.DRAFT)}
+                        >
+                          <FileText className="size-4" />
+                          <span>Revert to draft</span>
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <Button
+                    type="submit"
+                    form="post-form"
+                    disabled={isBusy}
+                    onClick={() => setTargetStatus(post.status)}
+                  >
+                    {isBusy ? (
+                      <>
+                        <Spinner />
+                        <span>
+                          {targetStatus === POST_STATUS.PUBLISHED &&
+                          post.status !== POST_STATUS.PUBLISHED
+                            ? "Publishing..."
+                            : targetStatus === POST_STATUS.UNPUBLISHED
+                              ? "Unpublishing..."
+                              : targetStatus === POST_STATUS.DRAFT &&
+                                  post.status !== POST_STATUS.DRAFT
+                                ? "Reverting..."
+                                : "Updating..."}
+                        </span>
+                      </>
+                    ) : (
+                      "Update"
+                    )}
+                  </Button>
+                </div>
               </div>
             )}
           </header>
@@ -283,6 +388,7 @@ export default function EditPost() {
             className="flex flex-col flex-1 gap-3 py-4"
             noValidate
             onSubmit={handleFormSubmit}
+            ref={postFormRef}
           >
             {errors.general && (
               <div className="flex items-center gap-2 rounded-lg bg-destructive/15 p-3 text-sm font-medium text-destructive border border-destructive">
@@ -427,11 +533,18 @@ export default function EditPost() {
                 <input type="hidden" name="title" value={title} />
                 <input type="hidden" name="subtitle" value={subtitle} />
                 <input type="hidden" name="content" value={content} />
+                <input
+                  type="hidden"
+                  name="status"
+                  ref={statusInputRef}
+                  value={post.status}
+                />
               </div>
             )}
           </Form>
         </main>
       </div>
+      <UnsavedChangesDialog blocker={blocker} />
     </>
   );
 }

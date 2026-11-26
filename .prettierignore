@@ -6,7 +6,11 @@ package-lock.json
 client/dist
 client/coverage
 
-# Server generated files (adjust to your Prisma output path)
+# Client vendor files
+client/src/components/ui
+client/src/components/editor
+
+# Server generated files
 server/generated
 server/prisma/migrations
 

@@ -8,16 +8,63 @@ import {
   getPosts as getPostsDB,
   updatePost as updatePostDB,
   deletePost as deletePostDB,
+  updatePostStatus as updatePostStatusDB,
 } from "../db/post.js";
-import { Prisma } from "../generated/prisma/index.js";
+import { PostStatus, Prisma } from "../generated/prisma/index.js";
 import { AppError } from "../lib/errorUtils.js";
-import { generateHashedSlug } from "../lib/postUtils.js";
+import {
+  generateHashedSlug,
+  isValidPostStatusTransition,
+} from "../lib/postUtils.js";
+
+// Change post status to either DRAFT, PUBLISHED OR UNPUBLISHED
+async function updatePostStatus(req, res) {
+  const { slug } = req.params;
+  const post = req.post;
+  const currentStatus = post.status;
+  const { status } = req.body;
+  const { id: userId } = req.user;
+
+  if (!isValidPostStatusTransition(currentStatus, status)) {
+    return res.status(400).json({
+      success: false,
+      message: "The status upgrade requested is invalid. Please check again.",
+      errors: [
+        {
+          field: "status",
+          message: `Post status is unable to go from ${currentStatus} to ${status}`,
+        },
+      ],
+    });
+  }
+
+  try {
+    const updatedPost = await updatePostStatusDB(slug, userId, status);
+
+    return res.status(200).json({
+      success: true,
+      message: "Post status has been updated",
+      data: {
+        status: updatedPost.status,
+      },
+    });
+  } catch (error) {
+    console.error();
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to update post status",
+      errors: [],
+    });
+  }
+}
 
 async function deletePost(req, res) {
   const { slug } = req.params;
+  const { id: userId } = req.user;
 
   try {
-    await deletePostDB(slug);
+    await deletePostDB(slug, userId);
 
     return res.status(200).json({
       success: true,
@@ -82,7 +129,15 @@ async function updatePost(req, res) {
     });
   }
 
-  const { content, subtitle, title } = req.body;
+  const { content, subtitle, title, status } = req.body;
+
+  if (!isValidPostStatusTransition(post.status, status)) {
+    return res.status(400).json({
+      success: false,
+      errors: [{ field: "status", message: "Invalid status transition" }],
+      message: "Invalid status transition.",
+    });
+  }
 
   try {
     const updatedPost = await updatePostDB(
@@ -90,7 +145,8 @@ async function updatePost(req, res) {
       userId,
       title,
       subtitle,
-      slug
+      slug,
+      status
     );
     return res.status(200).json({
       success: true,
@@ -131,11 +187,28 @@ async function updatePost(req, res) {
 async function createPost(req, res) {
   const userId = req.user.id;
 
-  const { content, title, subtitle } = req.body;
+  const { content, title, subtitle, status } = req.body;
   const slug = generateHashedSlug(title);
 
+  if (status !== PostStatus.DRAFT && status !== PostStatus.PUBLISHED) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid post creation status",
+      errors: [
+        { field: "status", message: "Invalid status. Please try again" },
+      ],
+    });
+  }
+
   try {
-    const post = await createPostDB(content, userId, title, subtitle, slug);
+    const post = await createPostDB(
+      content,
+      userId,
+      title,
+      subtitle,
+      slug,
+      status
+    );
     return res.status(200).json({
       success: true,
       data: post,
@@ -188,9 +261,10 @@ function getOwnPost(req, res) {
 
 async function viewPost(req, res) {
   const slug = req.params.slug;
+  const authorId = req?.user?.id;
 
   try {
-    const post = await getPostBySlugDB(slug);
+    const post = await getPostBySlugDB(slug, authorId);
     return res.status(200).json({
       data: post,
     });
@@ -217,4 +291,12 @@ async function viewPost(req, res) {
   }
 }
 
-export { createPost, viewPost, getPosts, getOwnPost, updatePost, deletePost };
+export {
+  createPost,
+  viewPost,
+  getPosts,
+  getOwnPost,
+  updatePost,
+  deletePost,
+  updatePostStatus,
+};

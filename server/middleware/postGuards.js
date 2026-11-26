@@ -7,7 +7,7 @@ async function postOwnershipGuard(req, res, next) {
   const { id: userId } = req.user;
 
   try {
-    const post = await getPostBySlugDB(slug);
+    const post = await getPostBySlugDB(slug, userId);
 
     if (post.authorId !== userId) {
       return res.status(403).json({
@@ -28,6 +28,9 @@ async function postOwnershipGuard(req, res, next) {
       statusCode = error.statusCode;
       if (error.errorCode === POST_ERROR_CODES.POST_NOT_FOUND) {
         message = "Post not found. Please try again.";
+      } else if (error.errorCode === POST_ERROR_CODES.UNAUTHORIZED) {
+        message =
+          "Unauthorized action. User is unable to retrieve post due to insufficient access rights.";
       } else {
         message = "Something went wrong. Please try again.";
       }

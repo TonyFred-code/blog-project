@@ -1,7 +1,10 @@
 import Header from "@/components/Header";
 import ButtonLink from "@/components/LinkButton";
+import PageTitle from "@/components/PageTitle";
 import { Button } from "@/components/ui/button";
 import { ServerOff, TriangleAlert } from "lucide-react";
+import nProgress from "nprogress";
+import { useEffect } from "react";
 import { isRouteErrorResponse, useRouteError } from "react-router-dom";
 
 const UNREACHABLE_STATUSES = [502, 503, 504];
@@ -51,9 +54,17 @@ export default function ErrorPage() {
   const view = getErrorView(error);
   const Icon = view.icon;
 
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      nProgress.done();
+    }, 150);
+
+    return () => clearTimeout(timerId);
+  }, []);
+
   return (
     <>
-      <title>{`${view.documentTitle} | Blog App`}</title>
+      <PageTitle title={view.documentTitle} />
       <div>
         <Header />
         <main className="max-w-md mx-auto py-20 px-4 text-center space-y-4">

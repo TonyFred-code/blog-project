@@ -3,10 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <link
-      rel="apple-touch-icon"
-      sizes="180x180"
-      href="/assets/apple-touch-icon.png"
+      rel="icon"
+      href="/assets/favicon-light.svg"
+      type="image/svg+xml"
+      media="(prefers-color-scheme: light)"
     />
+    <link
+      rel="icon"
+      href="/assets/favicon-dark.svg"
+      type="image/svg+xml"
+      media="(prefers-color-scheme: dark)"
+    />
+
     <link
       rel="icon"
       type="image/png"
@@ -20,11 +28,39 @@
       href="/assets/favicon-16x16.png"
     />
     <link rel="icon" type="image/x-icon" href="/assets/favicon.ico" />
+
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="/assets/apple-touch-icon.png"
+    />
+
     <link rel="manifest" href="/assets/site.webmanifest" />
     <meta name="theme-color" content="#1447e6" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Blog App</title>
   </head>
+  <script>
+    (() => {
+      try {
+        const stored = localStorage.getItem("blog_theme");
+        const prefersDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+
+        const shouldUseDark =
+          stored === "dark" ||
+          (stored === "system" && prefersDark) ||
+          (!stored && prefersDark);
+
+        if (shouldUseDark) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (_) {
+        // ignore and let it default to light
+      }
+    })();
+  </script>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>

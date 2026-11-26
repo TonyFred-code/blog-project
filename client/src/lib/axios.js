@@ -1,19 +1,32 @@
 import axios from "axios";
 
 let inMemoryToken = null;
+let sessionUser = null;
+let isSessionRestored = false;
+let sessionRestorePromise = null;
 let onSessionExpired = null;
 let refreshPromise = null;
 
-function setAccessToken(token) {
-  inMemoryToken = token;
-}
+const NO_REFRESH_PATHS = ["/login", "/logout", "/register", "/token-refresh"];
 
-function getAccessToken() {
-  return inMemoryToken;
+function shouldSkipRefresh(url = "") {
+  return NO_REFRESH_PATHS.includes(url.split("?")[0]);
 }
 
 function setSessionExpiredHandler(handler) {
   onSessionExpired = handler;
+}
+
+function setAuthSession(user, token) {
+  sessionUser = user;
+  inMemoryToken = token;
+  isSessionRestored = true;
+}
+
+function clearAuthSession() {
+  sessionUser = null;
+  inMemoryToken = null;
+  isSessionRestored = false;
 }
 
 const api = axios.create({
@@ -25,9 +38,44 @@ const api = axios.create({
   },
 });
 
+function restoreSession() {
+  if (isSessionRestored) {
+    return Promise.resolve({ user: sessionUser, token: inMemoryToken });
+  }
+
+  if (sessionRestorePromise) return sessionRestorePromise;
+
+  sessionRestorePromise = api
+    .post("/token-refresh")
+    .then((response) => {
+      inMemoryToken = response.data.token;
+      sessionUser = response.data.user;
+
+      return { user: sessionUser, token: inMemoryToken };
+    })
+    .catch(() => {
+      inMemoryToken = null;
+      sessionUser = null;
+
+      return { user: null, token: null };
+    })
+    .finally(() => {
+      sessionRestorePromise = null;
+      isSessionRestored = true;
+    });
+
+  return sessionRestorePromise;
+}
+
 // Inject Access Token into all outgoing requests
-api.interceptors.request.use((config) => {
-  if (inMemoryToken) {
+api.interceptors.request.use(async (config) => {
+  const path = config.url ? config.url.split("?")[0] : "";
+
+  if (!shouldSkipRefresh(path)) {
+    await restoreSession();
+  }
+
+  if (inMemoryToken && !shouldSkipRefresh(path)) {
     config.headers.Authorization = `Bearer ${inMemoryToken}`;
   }
 
@@ -35,25 +83,21 @@ api.interceptors.request.use((config) => {
 });
 
 function refreshAccessToken() {
-  if (!refreshPromise) {
-    refreshPromise = api
-      .post("/token-refresh")
-      .then((response) => {
-        setAccessToken(response.data.token);
-        return response.data;
-      })
-      .finally(() => {
-        refreshPromise = null;
-      });
-  }
+  if (refreshPromise) return refreshPromise;
+
+  refreshPromise = api
+    .post("/token-refresh")
+    .then((response) => {
+      inMemoryToken = response.data.token;
+      sessionUser = response.data.user;
+
+      return response.data;
+    })
+    .finally(() => {
+      refreshPromise = null;
+    });
 
   return refreshPromise;
-}
-
-const NO_REFRESH_PATHS = ["/login", "/logout", "/register", "/token-refresh"];
-
-function shouldSkipRefresh(url = "") {
-  return NO_REFRESH_PATHS.includes(url.split("?")[0]);
 }
 
 // Response interceptor to automatically refresh the token
@@ -94,7 +138,7 @@ api.interceptors.response.use(
       return api(originalRequest);
     } catch (refreshError) {
       if (refreshError.response?.status === 401) {
-        setAccessToken(null);
+        clearAuthSession();
         onSessionExpired?.();
       }
 
@@ -105,8 +149,9 @@ api.interceptors.response.use(
 
 export default api;
 export {
-  setAccessToken,
-  getAccessToken,
   refreshAccessToken,
   setSessionExpiredHandler,
+  setAuthSession,
+  clearAuthSession,
+  restoreSession,
 };
